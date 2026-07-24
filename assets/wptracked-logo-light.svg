@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="380" height="72" viewBox="0 0 380 72" role="img" aria-label="WPTracked by Varry LLC">
+  <defs>
+    <linearGradient id="wptl" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5EEAD4"/>
+      <stop offset="1" stop-color="#2DD4BF"/>
+    </linearGradient>
+  </defs>
+  <!-- Mark: rounded square (light border for dark bg) with tracking pulse line -->
+  <rect x="2" y="6" width="60" height="60" rx="14" fill="rgba(255,255,255,0.08)"
+        stroke="#2DD4BF" stroke-width="1.5"/>
+  <polyline points="12,44 22,44 28,26 36,52 42,36 52,36" fill="none"
+            stroke="url(#wptl)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="52" cy="36" r="4.5" fill="#5EEAD4"/>
+  <!-- Wordmark (white for dark headers) -->
+  <text x="76" y="38" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="30"
+        font-weight="700" fill="#FFFFFF">WP<tspan fill="#5EEAD4">Tracked</tspan></text>
+  <text x="77" y="58" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="12"
+        letter-spacing="2.5" fill="#AEB9CC">BY VARRY LLC</text>
+</svg>

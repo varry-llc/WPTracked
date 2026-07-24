@@ -214,9 +214,11 @@ by documentation placeholders — hostname `wp-prod-01`, `*.example.com`, and
 verdict are otherwise as produced by the tool:
 
 <div align="center">
-  <img src="assets/sample-report-p1.png" alt="WPTracked report page 1 — ALERT verdict, prioritised summary, recommended actions" width="32%">
-  <img src="assets/sample-report-p2.png" alt="WPTracked report page 2 — host infrastructure: disk, TLS certificates, OS updates" width="32%">
-  <img src="assets/sample-report-p3.png" alt="WPTracked report page 3 — WordPress core integrity and per-site security audit" width="32%">
+  <img src="assets/sample-report-p1.png" alt="WPTracked report page 1 — ALERT verdict, prioritised summary, recommended actions" width="85%">
+  <br><br>
+  <img src="assets/sample-report-p2.png" alt="WPTracked report page 2 — host infrastructure: disk, TLS certificates, OS updates" width="85%">
+  <br><br>
+  <img src="assets/sample-report-p3.png" alt="WPTracked report page 3 — WordPress core integrity and per-site security audit" width="85%">
 </div>
 
 The full sample is committed as

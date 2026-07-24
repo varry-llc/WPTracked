@@ -73,6 +73,34 @@ alone. `bin/healthcheck.sh` wires them together under a `flock` lock.
 
 ## Quickstart
 
+### Step 0 — get onto the server via a Devin outpost
+
+WPTracked runs **on the target server**. The native way to get there is a Devin
+outpost (Devin's agent loop stays in the cloud; commands run on your box). On the
+**server**:
+
+```bash
+# 0a. Install the Devin CLI
+curl -fsSL https://cli.devin.ai/install.sh | bash
+
+# 0b. Create an outpost in Devin Cloud:
+#     Settings → Environment → Outposts → "Create Outpost"  (name it, platform = Linux)
+
+# 0c. Start a worker that serves that outpost (outbound-only HTTPS; runs as your user)
+devin worker start --outpost=<outpost_name>
+```
+
+Then start a Devin session **on that outpost** — it now appears as a machine
+option in Devin Cloud, and the worker on your server runs the session locally.
+Full details (prerequisites, API-token scopes, keeping the worker alive, the
+privileged `auth.log` pattern) are in **[docs/OUTPOST.md](docs/OUTPOST.md)**;
+upstream: https://docs.devin.ai/cloud/outposts/quickstart
+
+*(Prefer to run it yourself over plain SSH? Skip Step 0 — everything below works
+on any shell on the server.)*
+
+### Step 1 — install & run
+
 ```bash
 git clone https://github.com/varry-llc/WPTracked.git
 cd WPTracked
@@ -92,13 +120,6 @@ sudo bin/healthcheck.sh --send           # generate + deliver
 ```
 
 Running on a server with no WordPress? Set `WPT_MODE=server` and go.
-
-**Running it through a Devin outpost?** Install the Devin CLI on the server
-(`curl -fsSL https://cli.devin.ai/install.sh | bash`), create an outpost in Devin
-Cloud, and start a worker (`devin worker start --outpost=<name>`) so sessions run
-on the box. Full walkthrough (with prerequisites, scopes, and the privileged
-`auth.log` pattern) is in **[docs/OUTPOST.md](docs/OUTPOST.md)**; upstream docs:
-https://docs.devin.ai/cloud/outposts/quickstart
 
 ## Requirements
 

@@ -26,8 +26,10 @@ BRAND_COMPANY = os.environ.get("BRAND_COMPANY", "Varry LLC")
 BRAND_PROJECT = os.environ.get("BRAND_PROJECT", "WPTracked")
 REPO_URL = os.environ.get("WPT_REPO_URL", "https://github.com/varry-llc/WPTracked")
 SITE_URL = os.environ.get("WPT_SITE_URL", "https://wptracked.com")
-NAVY, TEAL, BLUE = "#12224A", "#2DD4BF", "#1E6FB8"
-GREEN, AMBER, RED, INK, MUTE = "#1E9E5A", "#C8760A", "#C8102E", "#1B2430", "#5A6B85"
+# WPTracked "spaghetti-western" palette (matches wptracked.com): rust-red
+# primaries, leather/tan accent, parchment surfaces, ink text.
+NAVY, TEAL, BLUE = "#7a2d23", "#c46b3b", "#963a2f"
+GREEN, AMBER, RED, INK, MUTE = "#2b7a3b", "#b5701a", "#a12c2c", "#2c1f16", "#5e4735"
 
 # Severity ordering
 ALERT, WARN, INFO, OK = "alert", "warn", "info", "ok"
@@ -419,31 +421,31 @@ def render_html(md_text: str, verdict: dict, meta: dict) -> str:
     :root {{ --navy:{NAVY}; --teal:{TEAL}; --blue:{BLUE}; --ink:{INK}; --mute:{MUTE}; }}
     * {{ box-sizing:border-box; }}
     body {{ font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
-            color:var(--ink); margin:0; background:#f4f6fa; font-size:13.5px; line-height:1.5; }}
-    .wrap {{ max-width:860px; margin:0 auto; background:#fff; }}
-    .hdr {{ background:linear-gradient(135deg,{NAVY},#1B356B); color:#fff; padding:22px 28px;
+            color:var(--ink); margin:0; background:#efe6d2; font-size:13.5px; line-height:1.5; }}
+    .wrap {{ max-width:860px; margin:0 auto; background:#fffdf7; }}
+    .hdr {{ background:linear-gradient(135deg,{NAVY},#963a2f); color:#fff; padding:22px 28px;
             display:flex; align-items:center; justify-content:space-between; }}
     .hdr img {{ height:44px; }}
     .hdr .title {{ font-size:15px; font-weight:600; opacity:.9; }}
     .pill {{ display:inline-block; padding:6px 16px; border-radius:999px; font-weight:700;
              font-size:13px; letter-spacing:.5px; background:{pill}; color:#fff; }}
-    .meta {{ padding:14px 28px; background:#eef2f8; color:var(--mute); font-size:12.5px;
-             border-bottom:1px solid #dce3ee; }}
+    .meta {{ padding:14px 28px; background:#e5d5b7; color:var(--mute); font-size:12.5px;
+             border-bottom:1px solid #c4b596; }}
     .content {{ padding:8px 28px 28px; }}
     h2 {{ color:var(--navy); border-bottom:2px solid var(--teal); padding-bottom:4px;
           margin-top:26px; font-size:17px; }}
     h3 {{ color:var(--blue); margin:16px 0 6px; font-size:14px; }}
     table {{ border-collapse:collapse; width:100%; margin:8px 0 4px; font-size:12.5px; }}
-    th, td {{ border:1px solid #dce3ee; padding:6px 9px; text-align:left; }}
+    th, td {{ border:1px solid #d8c5a0; padding:6px 9px; text-align:left; }}
     th {{ background:{NAVY}; color:#fff; font-weight:600; }}
-    tr:nth-child(even) td {{ background:#f7f9fc; }}
-    code {{ background:#eef2f8; padding:1px 5px; border-radius:4px; font-size:12px;
+    tr:nth-child(even) td {{ background:#f6efe0; }}
+    code {{ background:#efe6d2; padding:1px 5px; border-radius:4px; font-size:12px;
             font-family:'SFMono-Regular',Consolas,monospace; }}
     ul {{ margin:6px 0; padding-left:20px; }}
     li {{ margin:3px 0; }}
-    hr {{ border:0; border-top:1px solid #dce3ee; margin:18px 0; }}
+    hr {{ border:0; border-top:1px solid #d8c5a0; margin:18px 0; }}
     .foot {{ color:var(--mute); font-size:11.5px; }}
-    .ftr {{ background:{NAVY}; color:#c7d2e6; padding:16px 28px; font-size:11.5px; text-align:center; }}
+    .ftr {{ background:{NAVY}; color:#e5d5b7; padding:16px 28px; font-size:11.5px; text-align:center; }}
     .ftr a {{ color:{TEAL}; text-decoration:none; }}
     @page {{ size:A4; margin:14mm 12mm; }}
     """

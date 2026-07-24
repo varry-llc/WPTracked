@@ -1,0 +1,16 @@
+# Secrets / local config
+config/healthcheck.env
+
+# Generated artifacts
+out/
+reports/*.md
+reports/*.html
+reports/*.pdf
+reports/*.json
+!reports/sample-*.md
+!reports/sample-*.pdf
+
+# Python / venv
+.venv/
+__pycache__/
+*.pyc

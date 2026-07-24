@@ -2,7 +2,7 @@
 """
 collect.py — gather raw server + WordPress health data into a single JSON file.
 
-This is the *data collection* stage of the Varry LLC · WP Maintenance pipeline.
+This is the *data collection* stage of the Varry LLC · WPTracked pipeline.
 It performs **read-only** inspection only; it never changes server or site state.
 
 What it collects
@@ -39,6 +39,31 @@ import socket
 import subprocess
 import sys
 from pathlib import Path
+
+# --------------------------------------------------------------------------- #
+# Configuration helpers (feature toggles + mode)
+# --------------------------------------------------------------------------- #
+
+def flag(name: str, default: bool = True) -> bool:
+    """Read a CHECK_* style boolean toggle from the environment.
+
+    Anything other than an explicit falsey value keeps the check enabled, so a
+    missing/blank variable means "on" (checks are opt-out, all on by default).
+    """
+    v = os.environ.get(name)
+    if v is None:
+        return default
+    return v.strip().lower() not in ("0", "false", "no", "off", "")
+
+
+def mode() -> str:
+    """'server' (host only) or 'server+wp' (everything, default)."""
+    return os.environ.get("WPT_MODE", "server+wp").strip().lower()
+
+
+def wp_enabled() -> bool:
+    return mode() != "server"
+
 
 # --------------------------------------------------------------------------- #
 # Small helpers
@@ -206,18 +231,114 @@ def collect_site(site: dict) -> dict:
     """Collect version, checksum integrity and plugin/theme inventory."""
     path = site["path"]
     site["wp_version"] = wp(path, ["core", "version"]) or None
-    checksum_out = wp(path, ["core", "verify-checksums"])
-    combined = checksum_out.lower()
-    site["checksums_ok"] = "success" in combined or "verifies against" in combined
-    site["checksums_detail"] = checksum_out.splitlines()[-1] if checksum_out else ""
-    site["plugins"] = [
-        p for p in wp_json(path, ["plugin", "list",
-            "--fields=name,status,version,update,update_version,auto_update"])
-        if p.get("status") != "dropin"
-    ]
-    site["themes"] = wp_json(path, ["theme", "list",
-        "--fields=name,status,version,update,update_version"])
+
+    # Core integrity (tamper detection) — gated by CHECK_WP_CORE.
+    if flag("CHECK_WP_CORE"):
+        checksum_out = wp(path, ["core", "verify-checksums"])
+        combined = checksum_out.lower()
+        site["checksums_ok"] = "success" in combined or "verifies against" in combined
+        site["checksums_detail"] = checksum_out.splitlines()[-1] if checksum_out else ""
+
+    # Plugin/theme inventory feeds the update, vulnerability and security checks.
+    if flag("CHECK_WP_UPDATES") or flag("CHECK_WP_VULN") or flag("CHECK_WP_SECURITY"):
+        site["plugins"] = [
+            p for p in wp_json(path, ["plugin", "list",
+                "--fields=name,status,version,update,update_version,auto_update"])
+            if p.get("status") != "dropin"
+        ]
+        site["themes"] = wp_json(path, ["theme", "list",
+            "--fields=name,status,version,update,update_version"])
+
+    if flag("CHECK_WP_SECURITY"):
+        site["security"] = collect_wp_security(site)
     return site
+
+
+def _perm_bits(path: str) -> int | None:
+    try:
+        return os.stat(path).st_mode & 0o777
+    except OSError:
+        return None
+
+
+def collect_wp_security(site: dict) -> list[dict]:
+    """Read-only WordPress security best-practices audit for one site.
+
+    Every item is {id, ok, severity, detail}. Severity feeds the report's
+    verdict engine (alert/warn/info/ok). Nothing here changes site state.
+    """
+    path = site["path"]
+    checks: list[dict] = []
+
+    def add(cid: str, ok: bool, severity: str, detail: str) -> None:
+        checks.append({"id": cid, "ok": ok, "severity": severity, "detail": detail})
+
+    def cfg_get(key: str) -> str:
+        return wp(path, ["config", "get", key], timeout=30)
+
+    # 1) wp-config.php file permissions — must not be group/world writable.
+    mode_bits = _perm_bits(os.path.join(path, "wp-config.php"))
+    if mode_bits is not None:
+        if mode_bits & 0o002:
+            add("wp-config-perms", False, "alert",
+                f"wp-config.php is world-writable ({oct(mode_bits)}) — set 0640")
+        elif mode_bits & 0o022 or mode_bits & 0o004:
+            add("wp-config-perms", False, "warn",
+                f"wp-config.php mode {oct(mode_bits)} — tighten to 0640 or stricter")
+        else:
+            add("wp-config-perms", True, "ok", f"wp-config.php mode {oct(mode_bits)}")
+
+    # 2) WP_DEBUG_DISPLAY must be off in production (no error leakage).
+    if cfg_get("WP_DEBUG_DISPLAY").strip().lower() in ("1", "true"):
+        add("debug-display", False, "warn",
+            "WP_DEBUG_DISPLAY is enabled — PHP errors are shown to visitors")
+    else:
+        add("debug-display", True, "ok", "WP_DEBUG_DISPLAY is off")
+
+    # 3) DISALLOW_FILE_EDIT hardens the dashboard theme/plugin editor.
+    if cfg_get("DISALLOW_FILE_EDIT").strip().lower() in ("1", "true"):
+        add("file-edit", True, "ok", "DISALLOW_FILE_EDIT enabled")
+    else:
+        add("file-edit", False, "info",
+            "DISALLOW_FILE_EDIT not set — dashboard code editor is active")
+
+    # 4) Default database table prefix is a predictable target.
+    prefix = cfg_get("table_prefix").strip()
+    if prefix and prefix != "wp_":
+        add("table-prefix", True, "ok", f"non-default table prefix ({prefix})")
+    elif prefix == "wp_":
+        add("table-prefix", False, "info", "default table prefix 'wp_' in use")
+
+    # 5) A predictable 'admin' administrator account.
+    admins = wp_json(path, ["user", "list", "--role=administrator",
+                            "--field=user_login"])
+    if isinstance(admins, list) and admins:
+        if any(str(a).lower() == "admin" for a in admins):
+            add("admin-user", False, "warn",
+                "an administrator named 'admin' exists — rename it")
+        else:
+            add("admin-user", True, "ok",
+                f"{len(admins)} admin account(s), none named 'admin'")
+
+    # 6) Site URL should be HTTPS.
+    siteurl = wp(path, ["option", "get", "siteurl"], timeout=30)
+    if siteurl.startswith("https://"):
+        add("https", True, "ok", "site URL uses HTTPS")
+    elif siteurl:
+        add("https", False, "warn", f"site URL is not HTTPS ({siteurl})")
+
+    # 7) Inactive plugins are dormant attack surface.
+    inactive = [p for p in site.get("plugins", []) if p.get("status") == "inactive"]
+    if inactive:
+        add("inactive-plugins", False, "info",
+            f"{len(inactive)} inactive plugin(s) installed — remove if unused")
+
+    # 8) readme.html discloses the exact WordPress version.
+    if os.path.exists(os.path.join(path, "readme.html")):
+        add("readme-exposed", False, "info",
+            "readme.html is present — discloses the WordPress version")
+
+    return checks
 
 
 # --------------------------------------------------------------------------- #
@@ -342,15 +463,34 @@ def main() -> int:
     ap.add_argument("--server-label", default=os.environ.get("SERVER_LABEL", ""))
     args = ap.parse_args()
 
-    if not shutil.which("wp"):
-        print("WARNING: wp-cli not found on PATH; WordPress checks will be empty.",
-              file=sys.stderr)
+    # WordPress inspection only in server+wp mode (and only if wp-cli exists).
+    sites: list[dict] = []
+    if wp_enabled():
+        if not shutil.which("wp"):
+            print("WARNING: wp-cli not found on PATH; WordPress checks skipped.",
+                  file=sys.stderr)
+        else:
+            sites = discover_sites(args.www_root)
+            for s in sites:
+                collect_site(s)
 
-    sites = discover_sites(args.www_root)
-    for s in sites:
-        collect_site(s)
+    # Host infrastructure — each block honours its CHECK_* toggle.
+    disk, inode_pct = collect_disk() if flag("CHECK_DISK") else ([], None)
+    host = {
+        "disk": disk,
+        "inode_pct_root": inode_pct,
+        "ssl": collect_ssl([s["slug"] for s in sites]) if flag("CHECK_SSL") else [],
+        "updates": collect_updates() if flag("CHECK_UPDATES") else {},
+    }
 
-    disk, inode_pct = collect_disk()
+    logs: dict = {"ols_error_logs": [], "access": [], "auth": {"available": False}}
+    if flag("CHECK_WEB_LOGS"):
+        logs.update(collect_web_logs(sites))
+    if flag("CHECK_AUTH_LOG"):
+        logs["auth"] = collect_auth_log()
+    else:
+        logs["auth"] = {"available": False, "reason": "disabled (CHECK_AUTH_LOG=0)"}
+
     data = {
         "meta": {
             "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(),
@@ -358,25 +498,22 @@ def main() -> int:
             "hostname": socket.gethostname(),
             "run_as_root": os.geteuid() == 0,
             "www_root": args.www_root,
+            "mode": mode(),
+            "checks": {n: flag(n) for n in (
+                "CHECK_DISK", "CHECK_SSL", "CHECK_UPDATES", "CHECK_WEB_LOGS",
+                "CHECK_AUTH_LOG", "CHECK_WP_CORE", "CHECK_WP_UPDATES",
+                "CHECK_WP_VULN", "CHECK_WP_SECURITY")},
         },
-        "host": {
-            "disk": disk,
-            "inode_pct_root": inode_pct,
-            "ssl": collect_ssl([s["slug"] for s in sites]),
-            "updates": collect_updates(),
-        },
+        "host": host,
         "sites": sites,
-        "logs": {
-            **collect_web_logs(sites),
-            "auth": collect_auth_log(),
-        },
+        "logs": logs,
     }
 
     out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(data, indent=2))
-    print(f"collect: wrote {out_path} "
-          f"({len(sites)} site(s), auth={'yes' if data['logs']['auth'].get('available') else 'skipped'})")
+    print(f"collect: wrote {out_path} (mode={mode()}, {len(sites)} site(s), "
+          f"auth={'yes' if data['logs']['auth'].get('available') else 'skipped'})")
     return 0
 
 

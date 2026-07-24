@@ -1,4 +1,5 @@
 # Secrets / local config
+config/wptracked.env
 config/healthcheck.env
 
 # Generated artifacts

@@ -30,7 +30,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-UA = "Varry-WPMaintenance/1.0 (+https://github.com/varry-llc/WPMaintenance)"
+UA = "WPTracked/1.0 (+https://github.com/varry-llc/WPTracked)"
 FEED = "https://www.wpvulnerability.net/{kind}/{slug}"
 KEV_URL = ("https://www.cisa.gov/sites/default/files/feeds/"
            "known_exploited_vulnerabilities.json")

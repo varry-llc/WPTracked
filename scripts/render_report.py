@@ -23,7 +23,9 @@ from pathlib import Path
 # Branding
 # --------------------------------------------------------------------------- #
 BRAND_COMPANY = os.environ.get("BRAND_COMPANY", "Varry LLC")
-BRAND_PROJECT = os.environ.get("BRAND_PROJECT", "WP Maintenance")
+BRAND_PROJECT = os.environ.get("BRAND_PROJECT", "WPTracked")
+REPO_URL = os.environ.get("WPT_REPO_URL", "https://github.com/varry-llc/WPTracked")
+SITE_URL = os.environ.get("WPT_SITE_URL", "https://wptracked.com")
 NAVY, TEAL, BLUE = "#12224A", "#2DD4BF", "#1E6FB8"
 GREEN, AMBER, RED, INK, MUTE = "#1E9E5A", "#C8760A", "#C8102E", "#1B2430", "#5A6B85"
 
@@ -89,6 +91,15 @@ def evaluate(data: dict, vuln: dict) -> dict:
         if s.get("checksums_ok") is False:
             add(ALERT, "WP Core", f"{s['slug']}: core checksum verification FAILED")
 
+    # WordPress security best-practices audit
+    sev_map = {"alert": ALERT, "warn": WARN, "info": INFO}
+    for s in data.get("sites", []):
+        for chk in s.get("security", []):
+            if chk.get("ok") or chk.get("severity") == "ok":
+                continue
+            add(sev_map.get(chk.get("severity"), INFO), "WP Security",
+                f"{s['slug']}: {chk['detail']}")
+
     # Plugin updates (maintenance -> info)
     upd_count = sum(1 for s in data.get("sites", [])
                     for p in s.get("plugins", []) if p.get("update") == "available")
@@ -141,107 +152,154 @@ def evaluate(data: dict, vuln: dict) -> dict:
 
 def render_markdown(data: dict, vuln: dict, verdict: dict) -> str:
     m = data["meta"]
-    L = []
+    sites = data.get("sites", [])
+    host = data.get("host", {})
+    L: list[str] = []
+
+    # --- Header ---------------------------------------------------------------
     L.append(f"# [{verdict['status']}] {BRAND_COMPANY} · {BRAND_PROJECT} — Health Check")
     L.append("")
+    scope = "Server + WordPress" if m.get("mode") != "server" else "Server only"
     L.append(f"**Server:** `{m['server_label']}`  ")
     L.append(f"**Generated:** {m['generated_at']}  ")
-    L.append(f"**Sites:** {', '.join(s['slug'] for s in data['sites']) or 'none discovered'}")
+    L.append(f"**Scope:** {scope}  ")
+    if sites:
+        L.append(f"**Sites:** {', '.join(s['slug'] for s in sites)}")
     L.append("")
 
-    # Verdict summary
+    # --- Summary (prioritised findings) --------------------------------------
     L.append("## Summary")
     order = {ALERT: 0, WARN: 1, INFO: 2}
     icons = {ALERT: "🔴", WARN: "🟠", INFO: "🔵"}
-    sig = [i for i in verdict["items"] if i["severity"] in order]
+    items = verdict["items"]
+    counts = {s: sum(1 for i in items if i["severity"] == s) for s in (ALERT, WARN, INFO)}
+    L.append(f"- **Verdict:** {'🔴 ALERT' if verdict['status']=='ALERT' else '🟢 HEALTHY'} "
+             f"· {counts[ALERT]} alert(s), {counts[WARN]} warning(s), {counts[INFO]} notice(s)")
+    sig = [i for i in items if i["severity"] in order]
     if sig:
         for i in sorted(sig, key=lambda x: order[x["severity"]]):
             L.append(f"- {icons[i['severity']]} **{i['area']}** — {i['message']}")
     else:
-        L.append("- 🟢 All checks passed.")
+        L.append("- 🟢 All checks passed — no action required.")
     L.append("")
 
-    # Host
-    host = data["host"]
-    L.append("## 1. Host Infrastructure")
-    L.append("\n### Disk")
-    L.append("| Filesystem | Size | Used | Avail | Use% | Mount |")
-    L.append("|---|---|---|---|---|---|")
-    for f in host["disk"]:
-        L.append(f"| {f['filesystem']} | {f['size']} | {f['used']} | {f['avail']} | {f['use_pct']}% | {f['mount']} |")
-    if host.get("inode_pct_root") is not None:
-        L.append(f"\nRoot inode usage: {host['inode_pct_root']}%.")
-    L.append("\n### TLS Certificates")
-    L.append("| Domain | Issuer | Expires | Days left |")
-    L.append("|---|---|---|---|")
-    for c in host["ssl"]:
-        if c.get("error"):
-            L.append(f"| {c['domain']} | — | error | {c['error']} |")
-        else:
-            L.append(f"| {c['domain']} | {c.get('issuer','')} | {c.get('not_after','')} | {c.get('days_left','?')} |")
-    upd = host["updates"]
-    L.append("\n### OS / Security Updates")
-    L.append(f"- Applicable now: **{upd.get('updates', '?')}** (security: {upd.get('security', '?')})")
-    if upd.get("esm"):
-        L.append(f"- ESM-only (Ubuntu Pro) security updates: {upd['esm']}")
-    L.append(f"- Reboot required: {'yes' if upd.get('reboot_required') else 'no'}")
+    # --- Recommendations (actionable, alerts + warnings) ----------------------
+    todo = [i for i in items if i["severity"] in (ALERT, WARN)]
+    if todo:
+        L.append("## Recommended Actions")
+        for i in sorted(todo, key=lambda x: order[x["severity"]]):
+            tag = "ALERT" if i["severity"] == ALERT else "warn"
+            L.append(f"1. **[{tag}] {i['area']}** — {i['message']}")
+        L.append("")
 
-    # WP core
-    L.append("\n## 2. WordPress Core Integrity")
-    L.append("| Site | Version | Checksums |")
-    L.append("|---|---|---|")
-    for s in data["sites"]:
-        ok = "✅ verified" if s.get("checksums_ok") else "❌ FAILED"
-        L.append(f"| {s['slug']} | {s.get('wp_version','?')} | {ok} |")
+    section = 0
 
-    # Plugins + vuln
-    L.append("\n## 3. Plugins, Themes & Vulnerabilities")
-    updates = [(s['slug'], p) for s in data['sites'] for p in s.get('plugins', [])
-               if p.get('update') == 'available']
-    if updates:
-        L.append("\n**Available updates:**")
-        L.append("| Site | Plugin | Installed | Latest |")
+    def h2(title: str) -> None:
+        nonlocal section
+        section += 1
+        L.append(f"\n## {section}. {title}")
+
+    # --- Host Infrastructure --------------------------------------------------
+    h2("Host Infrastructure")
+    if host.get("disk"):
+        L.append("\n### Disk")
+        L.append("| Filesystem | Size | Used | Avail | Use% | Mount |")
+        L.append("|---|---|---|---|---|---|")
+        for f in host["disk"]:
+            L.append(f"| {f['filesystem']} | {f['size']} | {f['used']} | {f['avail']} | {f['use_pct']}% | {f['mount']} |")
+        if host.get("inode_pct_root") is not None:
+            L.append(f"\nRoot inode usage: {host['inode_pct_root']}%.")
+    if host.get("ssl"):
+        L.append("\n### TLS Certificates")
+        L.append("| Domain | Issuer | Expires | Days left |")
         L.append("|---|---|---|---|")
-        for slug, p in updates:
-            L.append(f"| {slug} | {p['name']} | {p['version']} | {p.get('update_version','')} |")
-    else:
-        L.append("\nAll plugins/themes are current.")
-    L.append(f"\n**Vulnerability scan** — {vuln.get('components_scanned', 0)} components vs "
-             f"wpvulnerability.net, CVEs cross-referenced with CISA KEV "
-             f"({vuln.get('kev_catalog_size', 0)} entries):")
-    if vuln.get("findings"):
-        L.append(f"- ⚠️ **{len(vuln['findings'])} vulnerable component(s)** found:")
-        for f in vuln["findings"]:
-            L.append(f"  - `{f['slug']}` {f['installed']} — {f.get('title','')} "
-                     f"(CVEs: {', '.join(f['cves']) or 'n/a'})")
-        if vuln.get("kev_hits"):
-            L.append(f"- 🔴 **CISA KEV (actively exploited):** {', '.join(vuln['kev_hits'])}")
-    else:
-        L.append("- ✅ **0 matching vulnerabilities**, **0 CISA KEV** matches — all installed "
-                 "versions are newer than every known-vulnerable version.")
-    not_listed = [c for c in vuln.get("coverage", [])
-                  if not c["covered"] and c.get("reason") == "notlisted"]
-    errored = [c for c in vuln.get("coverage", [])
-               if not c["covered"] and c.get("reason") == "error"]
-    if not_listed:
-        L.append("- No public listing (custom/premium — verify manually): "
-                 + ", ".join(f"`{c['slug']}`" for c in not_listed))
-    if errored:
-        L.append("- Lookup did not complete for (re-run to confirm): "
-                 + ", ".join(f"`{c['slug']}`" for c in errored))
+        for c in host["ssl"]:
+            if c.get("error"):
+                L.append(f"| {c['domain']} | — | error | {c['error']} |")
+            else:
+                L.append(f"| {c['domain']} | {c.get('issuer','')} | {c.get('not_after','')} | {c.get('days_left','?')} |")
+    upd = host.get("updates", {})
+    if upd:
+        L.append("\n### OS / Security Updates")
+        L.append(f"- Applicable now: **{upd.get('updates', '?')}** (security: {upd.get('security', '?')})")
+        if upd.get("esm"):
+            L.append(f"- ESM-only (Ubuntu Pro) security updates: {upd['esm']}")
+        L.append(f"- Reboot required: {'yes' if upd.get('reboot_required') else 'no'}")
 
-    # Logs
-    L.append("\n## 4. Logs & Error Scanning")
-    for e in data["logs"].get("ols_error_logs", []):
+    # --- WordPress Core Integrity --------------------------------------------
+    if sites and any("checksums_ok" in s for s in sites):
+        h2("WordPress Core Integrity")
+        L.append("| Site | Version | Checksums |")
+        L.append("|---|---|---|")
+        for s in sites:
+            ok = "✅ verified" if s.get("checksums_ok") else "❌ FAILED"
+            L.append(f"| {s['slug']} | {s.get('wp_version','?')} | {ok} |")
+
+    # --- WordPress Security Audit --------------------------------------------
+    if sites and any(s.get("security") for s in sites):
+        h2("WordPress Security Audit")
+        sev_icon = {"alert": "🔴", "warn": "🟠", "info": "🔵", "ok": "✅"}
+        L.append("| Site | Check | Status | Detail |")
+        L.append("|---|---|---|---|")
+        for s in sites:
+            for chk in s.get("security", []):
+                icon = sev_icon.get(chk.get("severity"), "•")
+                L.append(f"| {s['slug']} | {chk['id']} | {icon} | {chk['detail']} |")
+
+    # --- Plugins, Themes & Vulnerabilities -----------------------------------
+    if sites and any(("plugins" in s or "themes" in s) for s in sites):
+        h2("Plugins, Themes & Vulnerabilities")
+        updates = [(s['slug'], kind, p)
+                   for s in sites
+                   for kind, lst in (("plugin", s.get('plugins', [])),
+                                     ("theme", s.get('themes', [])))
+                   for p in lst if p.get('update') == 'available']
+        if updates:
+            L.append("\n**Available updates:**")
+            L.append("| Site | Type | Name | Installed | Latest |")
+            L.append("|---|---|---|---|---|")
+            for slug, kind, p in updates:
+                L.append(f"| {slug} | {kind} | {p['name']} | {p['version']} | {p.get('update_version','')} |")
+        else:
+            L.append("\nAll plugins and themes are up to date.")
+        if data["meta"].get("checks", {}).get("CHECK_WP_VULN", True):
+            L.append(f"\n**Vulnerability scan** — {vuln.get('components_scanned', 0)} components vs "
+                     f"wpvulnerability.net, CVEs cross-referenced with CISA KEV "
+                     f"({vuln.get('kev_catalog_size', 0)} entries):")
+            if vuln.get("findings"):
+                L.append(f"- ⚠️ **{len(vuln['findings'])} vulnerable component(s)** found:")
+                for f in vuln["findings"]:
+                    L.append(f"  - `{f['slug']}` {f['installed']} — {f.get('title','')} "
+                             f"(CVEs: {', '.join(f['cves']) or 'n/a'})")
+                if vuln.get("kev_hits"):
+                    L.append(f"- 🔴 **CISA KEV (actively exploited):** {', '.join(vuln['kev_hits'])}")
+            else:
+                L.append("- ✅ **0 matching vulnerabilities**, **0 CISA KEV** matches — all installed "
+                         "versions are newer than every known-vulnerable version.")
+            not_listed = [c for c in vuln.get("coverage", [])
+                          if not c["covered"] and c.get("reason") == "notlisted"]
+            errored = [c for c in vuln.get("coverage", [])
+                       if not c["covered"] and c.get("reason") == "error"]
+            if not_listed:
+                L.append("- No public listing (custom/premium — verify manually): "
+                         + ", ".join(f"`{c['slug']}`" for c in not_listed))
+            if errored:
+                L.append("- Lookup did not complete for (re-run to confirm): "
+                         + ", ".join(f"`{c['slug']}`" for c in errored))
+
+    # --- Logs & Intrusion -----------------------------------------------------
+    logs = data.get("logs", {})
+    h2("Logs & Intrusion Scanning")
+    for e in logs.get("ols_error_logs", []):
         state = "empty" if e["bytes"] == 0 else f"{e['bytes']} bytes"
-        L.append(f"- OLS error log `{e['site']}`: {state}")
-    for a in data["logs"].get("access", []):
+        L.append(f"- Web-server error log `{e['site']}`: {state}")
+    for a in logs.get("access", []):
         sc = a["status_counts"]
         L.append(f"- Access `{a['site']}`: {a['total']} reqs; "
                  f"2xx={sum(v for k,v in sc.items() if k.startswith('2'))}, "
                  f"4xx={sum(v for k,v in sc.items() if k.startswith('4'))}, "
                  f"5xx={a['suspicious'].get('5xx',0)}")
-    auth = data["logs"].get("auth", {})
+    auth = logs.get("auth", {})
     L.append("\n### SSH auth.log")
     if auth.get("available"):
         w = auth.get("window", {})
@@ -259,7 +317,7 @@ def render_markdown(data: dict, vuln: dict, verdict: dict) -> str:
 
     L.append("")
     L.append("---")
-    L.append(f"_Generated by {BRAND_COMPANY} · {BRAND_PROJECT} — automated health check._")
+    L.append(f"_Generated by {BRAND_COMPANY} · {BRAND_PROJECT} ({SITE_URL}) — automated, read-only health check._")
     return "\n".join(L)
 
 
@@ -268,7 +326,7 @@ def render_markdown(data: dict, vuln: dict, verdict: dict) -> str:
 # --------------------------------------------------------------------------- #
 
 def _logo_data_uri(variant: str = "") -> str:
-    logo = os.environ.get("BRAND_LOGO", "assets/varry-logo.svg")
+    logo = os.environ.get("BRAND_LOGO", "assets/wptracked-logo.svg")
     if variant == "light":
         # Prefer a "*-light.svg" beside the configured logo (white wordmark for
         # the dark report header); fall back to the standard logo otherwise.
@@ -303,7 +361,16 @@ def render_html(md_text: str, verdict: dict, meta: dict) -> str:
     server = meta.get("server_label", "")
 
     # Minimal but complete Markdown -> HTML (headings, tables, lists, hr, code).
-    body, in_tbl, in_ul = [], False, False
+    import re as _re
+    body, in_tbl, in_ul, in_ol = [], False, False, False
+
+    def _close_lists() -> None:
+        nonlocal in_ul, in_ol
+        if in_ul:
+            body.append("</ul>"); in_ul = False
+        if in_ol:
+            body.append("</ol>"); in_ol = False
+
     for ln in md_text.splitlines():
         if ln.startswith("# "):
             continue  # rendered in the branded header instead
@@ -311,10 +378,10 @@ def render_html(md_text: str, verdict: dict, meta: dict) -> str:
             continue  # shown in the branded meta bar instead
         if ln.startswith("|"):
             cells = [c.strip() for c in ln.strip().strip("|").split("|")]
-            import re as _re
             if all(_re.match(r"^:?-+:?$", c) for c in cells):
                 continue
             if not in_tbl:
+                _close_lists()
                 body.append('<table>'); in_tbl = True; tag = "th"
             else:
                 tag = "td"
@@ -322,13 +389,17 @@ def render_html(md_text: str, verdict: dict, meta: dict) -> str:
             continue
         if in_tbl:
             body.append("</table>"); in_tbl = False
+        if _re.match(r"^\d+\. ", ln):
+            if not in_ol:
+                _close_lists(); body.append("<ol>"); in_ol = True
+            item = _re.sub(r"^\d+\. ", "", ln)
+            body.append(f"<li>{_md_inline(item)}</li>"); continue
         if ln.startswith("- ") or ln.startswith("  - "):
             if not in_ul:
-                body.append("<ul>"); in_ul = True
+                _close_lists(); body.append("<ul>"); in_ul = True
             indent = " style='margin-left:18px'" if ln.startswith("  - ") else ""
             body.append(f"<li{indent}>{_md_inline(ln.strip()[2:])}</li>"); continue
-        if in_ul:
-            body.append("</ul>"); in_ul = False
+        _close_lists()
         if ln.startswith("### "):
             body.append(f"<h3>{_md_inline(ln[4:])}</h3>")
         elif ln.startswith("## "):
@@ -341,8 +412,7 @@ def render_html(md_text: str, verdict: dict, meta: dict) -> str:
             body.append(f"<p>{_md_inline(ln)}</p>")
     if in_tbl:
         body.append("</table>")
-    if in_ul:
-        body.append("</ul>")
+    _close_lists()
 
     css = f"""
     :root {{ --navy:{NAVY}; --teal:{TEAL}; --blue:{BLUE}; --ink:{INK}; --mute:{MUTE}; }}
@@ -394,8 +464,9 @@ def render_html(md_text: str, verdict: dict, meta: dict) -> str:
   <div class="content">
     {''.join(body)}
   </div>
-  <div class="ftr">© {year} {BRAND_COMPANY} · {BRAND_PROJECT} · automated health check ·
-     <a href="https://github.com/varry-llc/WPMaintenance">varry-llc/WPMaintenance</a></div>
+  <div class="ftr">© {year} {BRAND_COMPANY} · {BRAND_PROJECT} · automated, read-only health check ·
+     <a href="{SITE_URL}">{SITE_URL.split('//')[-1]}</a> ·
+     <a href="{REPO_URL}">{REPO_URL.split('github.com/')[-1]}</a></div>
 </div></body></html>"""
 
 
@@ -419,14 +490,14 @@ def main() -> int:
     ap.add_argument("--data", default="out/data.json")
     ap.add_argument("--vuln", default="out/vuln.json")
     ap.add_argument("--out-dir", default="reports")
-    ap.add_argument("--name", default=None, help="basename (default: wp-health-<date>)")
+    ap.add_argument("--name", default=None, help="basename (default: wptracked-<date>)")
     args = ap.parse_args()
 
     data = json.loads(Path(args.data).read_text())
     vuln = json.loads(Path(args.vuln).read_text()) if Path(args.vuln).exists() else {}
     verdict = evaluate(data, vuln)
 
-    name = args.name or f"wp-health-{dt.date.today().isoformat()}"
+    name = args.name or f"wptracked-{dt.date.today().isoformat()}"
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 

@@ -1,4 +1,4 @@
-# Varry LLC · WP Maintenance — Python dependencies
+# Varry LLC · WPTracked — Python dependencies
 #
 # Only one third-party package is required, and only for PDF rendering.
 # Everything else uses the Python 3 standard library.

@@ -93,6 +93,13 @@ sudo bin/healthcheck.sh --send           # generate + deliver
 
 Running on a server with no WordPress? Set `WPT_MODE=server` and go.
 
+**Running it through a Devin outpost?** Install the Devin CLI on the server
+(`curl -fsSL https://cli.devin.ai/install.sh | bash`), create an outpost in Devin
+Cloud, and start a worker (`devin worker start --outpost=<name>`) so sessions run
+on the box. Full walkthrough (with prerequisites, scopes, and the privileged
+`auth.log` pattern) is in **[docs/OUTPOST.md](docs/OUTPOST.md)**; upstream docs:
+https://docs.devin.ai/cloud/outposts/quickstart
+
 ## Requirements
 
 - **Python 3.9+** (standard library only for collection/sending; WeasyPrint for PDF).

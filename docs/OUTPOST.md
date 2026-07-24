@@ -9,16 +9,47 @@ This guide covers running WPTracked **on the target server** through a Devin
 > does not reinvent any outpost management: you connect the outpost with Devin's
 > native flow, then run the tool like any other command on the box.
 
-## 0. Connect the outpost (Devin-native)
+## 0. Install & connect the outpost on the server (Devin-native)
 
-Use Devin's built-in outpost workflow to attach a worker to your server — see
-the official docs: **https://docs.devin.ai** (search "outpost"). Nothing in this
-repo replaces that flow. Once your Devin session is running *on* the server
-(you'll see the real hostname, e.g. from `hostname` / `id -un`), continue below.
+WPTracked runs inside a Devin **outpost** — Devin's agent loop stays in the
+cloud while every command runs on *your* server. Follow the official quickstart
+(**https://docs.devin.ai/cloud/outposts/quickstart**); the steps are summarised
+here. Nothing in this repo replaces that flow.
 
-If privileged steps need a password, provide it through Devin's **secret**
-mechanism (a session secret such as `SUDO_PASSWORD`) rather than typing it into
-a shell — see §3.
+**Prerequisites**
+- An organization with **Outposts enabled**.
+- A **v3 API token** with the Outposts scopes
+  (`account.outposts.orchestrator` and/or `account.outposts.machine`).
+- The target server with your repo cloned and the [machine
+  dependencies](https://docs.devin.ai/cloud/outposts/overview#machine-dependencies)
+  plus WPTracked's own deps (Python 3.9+, WP-CLI, WeasyPrint — see §1).
+
+**Steps**
+
+1. **Install the Devin CLI** on the server:
+   ```bash
+   curl -fsSL https://cli.devin.ai/install.sh | bash
+   ```
+2. **Create an outpost** in Devin Cloud → **Settings → Environment → Outposts →
+   "Create Outpost"**. Give it a name (e.g. `wp-hosts`) and choose the platform
+   (**Linux** for a typical VPS).
+3. **Start the worker** on the server so it serves that outpost's queue:
+   ```bash
+   devin worker start --outpost=<outpost_name>
+   ```
+   The worker opens an **outbound-only** HTTPS connection (no inbound ports /
+   public IP needed) and executes sessions with your user's permissions. Run it
+   under a user that can reach the sites and (via `sudo`) read `auth.log` — see
+   §3.
+4. **Start a session on the outpost.** In Devin Cloud the outpost now appears as
+   a machine option; start a session on it and the worker on your server claims
+   it. Confirm you're really on the box (`hostname`, `id -un`) before running the
+   audit.
+
+> Keep the worker running (e.g. under `systemd`, `tmux`, or `nohup`) if you want
+> scheduled/automated runs to land on this server. If privileged steps need a
+> password, provide it through Devin's **secret** mechanism (a session secret
+> such as `SUDO_PASSWORD`) rather than typing it into a shell — see §3.
 
 ## 1. Prerequisites on the server
 

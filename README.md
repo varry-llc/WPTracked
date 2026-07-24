@@ -177,13 +177,16 @@ idempotency key so a retried run does not duplicate the e-mail.
 
 ## Example output
 
-A representative `[ALERT]` run (all identifiers below are fabricated
-documentation values — `wp-prod-01`, `*.example.com`, and
-[RFC 5737](https://datatracker.ietf.org/doc/html/rfc5737)/`203.0.113.x` IPs):
+This is a **real `[ALERT]` run** (4 sites) with every identifying value replaced
+by documentation placeholders — hostname `wp-prod-01`, `*.example.com`, and
+[RFC 5737](https://datatracker.ietf.org/doc/html/rfc5737) IPs
+(`198.51.100.x`, `203.0.113.x`, `192.0.2.x`). The findings, versions, counts and
+verdict are otherwise as produced by the tool:
 
 <div align="center">
-  <img src="assets/sample-report-p1.png" alt="WPTracked report — verdict, summary, recommended actions, host infrastructure" width="49%">
-  <img src="assets/sample-report-p2.png" alt="WPTracked report — core integrity, WordPress security audit, vulnerabilities" width="49%">
+  <img src="assets/sample-report-p1.png" alt="WPTracked report page 1 — ALERT verdict, prioritised summary, recommended actions" width="32%">
+  <img src="assets/sample-report-p2.png" alt="WPTracked report page 2 — host infrastructure: disk, TLS certificates, OS updates" width="32%">
+  <img src="assets/sample-report-p3.png" alt="WPTracked report page 3 — WordPress core integrity and per-site security audit" width="32%">
 </div>
 
 The full sample is committed as

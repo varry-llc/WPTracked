@@ -1,0 +1,12 @@
+# Varry LLC · WP Maintenance — Python dependencies
+#
+# Only one third-party package is required, and only for PDF rendering.
+# Everything else uses the Python 3 standard library.
+#
+# WeasyPrint needs these system libraries at runtime (Debian/Ubuntu):
+#   libpango-1.0-0 libpangocairo-1.0-0 libcairo2 libgdk-pixbuf-2.0-0
+# Install them with:  sudo apt-get install -y libpango-1.0-0 libpangocairo-1.0-0
+#
+# If WeasyPrint is not installed the pipeline still runs and produces the
+# Markdown + HTML report; only the PDF attachment is skipped.
+weasyprint>=60

@@ -170,17 +170,21 @@ def render_markdown(data: dict, vuln: dict, verdict: dict) -> str:
     # --- Summary (prioritised findings) --------------------------------------
     L.append("## Summary")
     order = {ALERT: 0, WARN: 1, INFO: 2}
-    icons = {ALERT: "🔴", WARN: "🟠", INFO: "🔵"}
+    # Severity is emitted as a bracketed label (e.g. [ALERT]); it reads cleanly in
+    # the plain Markdown and is upgraded to a colored CSS "pill" badge in the HTML
+    # body + PDF (see _md_inline). No emoji/icon fonts, so it renders identically
+    # in browsers, WeasyPrint PDFs, and e-mail clients.
+    labels = {ALERT: "[ALERT]", WARN: "[WARN]", INFO: "[INFO]"}
     items = verdict["items"]
     counts = {s: sum(1 for i in items if i["severity"] == s) for s in (ALERT, WARN, INFO)}
-    L.append(f"- **Verdict:** {'🔴 ALERT' if verdict['status']=='ALERT' else '🟢 HEALTHY'} "
+    L.append(f"- **Verdict:** {'[ALERT]' if verdict['status']=='ALERT' else '[HEALTHY]'} "
              f"· {counts[ALERT]} alert(s), {counts[WARN]} warning(s), {counts[INFO]} notice(s)")
     sig = [i for i in items if i["severity"] in order]
     if sig:
         for i in sorted(sig, key=lambda x: order[x["severity"]]):
-            L.append(f"- {icons[i['severity']]} **{i['area']}** — {i['message']}")
+            L.append(f"- {labels[i['severity']]} **{i['area']}** — {i['message']}")
     else:
-        L.append("- 🟢 All checks passed — no action required.")
+        L.append("- [OK] All checks passed — no action required.")
     L.append("")
 
     # --- Recommendations (actionable, alerts + warnings) ----------------------
@@ -188,8 +192,8 @@ def render_markdown(data: dict, vuln: dict, verdict: dict) -> str:
     if todo:
         L.append("## Recommended Actions")
         for i in sorted(todo, key=lambda x: order[x["severity"]]):
-            tag = "ALERT" if i["severity"] == ALERT else "warn"
-            L.append(f"1. **[{tag}] {i['area']}** — {i['message']}")
+            tag = "ALERT" if i["severity"] == ALERT else "WARN"
+            L.append(f"1. [{tag}] **{i['area']}** — {i['message']}")
         L.append("")
 
     section = 0
@@ -232,19 +236,19 @@ def render_markdown(data: dict, vuln: dict, verdict: dict) -> str:
         L.append("| Site | Version | Checksums |")
         L.append("|---|---|---|")
         for s in sites:
-            ok = "✅ verified" if s.get("checksums_ok") else "❌ FAILED"
+            ok = "[OK] verified" if s.get("checksums_ok") else "[FAIL] FAILED"
             L.append(f"| {s['slug']} | {s.get('wp_version','?')} | {ok} |")
 
     # --- WordPress Security Audit --------------------------------------------
     if sites and any(s.get("security") for s in sites):
         h2("WordPress Security Audit")
-        sev_icon = {"alert": "🔴 ALERT", "warn": "🟠 WARN",
-                    "info": "🔵 INFO", "ok": "✅ OK"}
+        sev_label = {"alert": "[ALERT]", "warn": "[WARN]",
+                     "info": "[INFO]", "ok": "[OK]"}
         L.append("| Site | Check | Status | Detail |")
         L.append("|---|---|---|---|")
         for s in sites:
             for chk in s.get("security", []):
-                icon = sev_icon.get(chk.get("severity"), "•")
+                icon = sev_label.get(chk.get("severity"), "—")
                 L.append(f"| {s['slug']} | {chk['id']} | {icon} | {chk['detail']} |")
 
     # --- Plugins, Themes & Vulnerabilities -----------------------------------
@@ -268,14 +272,14 @@ def render_markdown(data: dict, vuln: dict, verdict: dict) -> str:
                      f"wpvulnerability.net, CVEs cross-referenced with CISA KEV "
                      f"({vuln.get('kev_catalog_size', 0)} entries):")
             if vuln.get("findings"):
-                L.append(f"- ⚠️ **{len(vuln['findings'])} vulnerable component(s)** found:")
+                L.append(f"- [ALERT] **{len(vuln['findings'])} vulnerable component(s)** found:")
                 for f in vuln["findings"]:
                     L.append(f"  - `{f['slug']}` {f['installed']} — {f.get('title','')} "
                              f"(CVEs: {', '.join(f['cves']) or 'n/a'})")
                 if vuln.get("kev_hits"):
-                    L.append(f"- 🔴 **CISA KEV (actively exploited):** {', '.join(vuln['kev_hits'])}")
+                    L.append(f"- [ALERT] **CISA KEV (actively exploited):** {', '.join(vuln['kev_hits'])}")
             else:
-                L.append("- ✅ **0 matching vulnerabilities**, **0 CISA KEV** matches — all installed "
+                L.append("- [OK] **0 matching vulnerabilities**, **0 CISA KEV** matches — all installed "
                          "versions are newer than every known-vulnerable version.")
             not_listed = [c for c in vuln.get("coverage", [])
                           if not c["covered"] and c.get("reason") == "notlisted"]
@@ -345,11 +349,20 @@ def _logo_data_uri(variant: str = "") -> str:
     return ""
 
 
+_BADGE_CLASS = {"ALERT": "alert", "WARN": "warn", "INFO": "info",
+                "OK": "ok", "HEALTHY": "healthy", "FAIL": "fail"}
+
+
 def _md_inline(s: str) -> str:
     s = html.escape(s, quote=False)
     import re as _re
     s = _re.sub(r"`([^`]+)`", r"<code>\1</code>", s)
     s = _re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", s)
+    # [ALERT]/[WARN]/[INFO]/[OK]/[HEALTHY]/[FAIL] -> colored CSS pill badge
+    def _badge(m: "_re.Match") -> str:
+        cls = _BADGE_CLASS[m.group(1)]
+        return f'<span class="badge badge--{cls}">{m.group(1)}</span>'
+    s = _re.sub(r"\[(ALERT|WARN|INFO|OK|HEALTHY|FAIL)\]", _badge, s)
     return s
 
 
@@ -427,6 +440,13 @@ def render_html(md_text: str, verdict: dict, meta: dict) -> str:
     .hdr .title {{ font-size:15px; font-weight:600; opacity:.9; }}
     .pill {{ display:inline-block; padding:6px 16px; border-radius:999px; font-weight:700;
              font-size:13px; letter-spacing:.5px; background:{pill}; color:#fff; }}
+    .badge {{ display:inline-block; padding:1px 9px; border-radius:999px; font-weight:700;
+              font-size:11px; letter-spacing:.4px; color:#fff; white-space:nowrap; }}
+    .badge--alert {{ background:{RED}; }}
+    .badge--warn {{ background:{AMBER}; }}
+    .badge--info {{ background:{BLUE}; }}
+    .badge--ok, .badge--healthy {{ background:{GREEN}; }}
+    .badge--fail {{ background:{RED}; }}
     .meta {{ padding:14px 28px; background:#eef2f8; color:var(--mute); font-size:12.5px;
              border-bottom:1px solid #dce3ee; }}
     .content {{ padding:8px 28px 28px; }}

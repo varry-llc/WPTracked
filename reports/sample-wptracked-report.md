@@ -6,36 +6,36 @@
 **Sites:** site-one.example.com, site-two.example.com, site-three.example.com, site-four.example.com
 
 ## Summary
-- **Verdict:** 🔴 ALERT · 1 alert(s), 6 warning(s), 13 notice(s)
-- 🔴 **SSH** — root login via *password* from 203.0.113.66 (2x) — password root SSH is enabled; set PermitRootLogin prohibit-password + PasswordAuthentication no
-- 🟠 **OS Updates** — 7 pending security update(s)
-- 🟠 **WP Security** — site-one.example.com: wp-config.php mode 0o664 — tighten to 0640 or stricter
-- 🟠 **WP Security** — site-two.example.com: wp-config.php mode 0o664 — tighten to 0640 or stricter
-- 🟠 **WP Security** — site-three.example.com: wp-config.php mode 0o664 — tighten to 0640 or stricter
-- 🟠 **WP Security** — site-four.example.com: wp-config.php mode 0o644 — tighten to 0640 or stricter
-- 🟠 **SSH** — 3,139 failed/invalid SSH attempts (brute-force scanning) — no rate-limiting observed
-- 🔵 **WP Security** — site-one.example.com: DISALLOW_FILE_EDIT not set — dashboard code editor is active
-- 🔵 **WP Security** — site-one.example.com: 2 inactive plugin(s) installed — remove if unused
-- 🔵 **WP Security** — site-one.example.com: readme.html is present — discloses the WordPress version
-- 🔵 **WP Security** — site-two.example.com: DISALLOW_FILE_EDIT not set — dashboard code editor is active
-- 🔵 **WP Security** — site-two.example.com: 2 inactive plugin(s) installed — remove if unused
-- 🔵 **WP Security** — site-two.example.com: readme.html is present — discloses the WordPress version
-- 🔵 **WP Security** — site-three.example.com: DISALLOW_FILE_EDIT not set — dashboard code editor is active
-- 🔵 **WP Security** — site-three.example.com: 2 inactive plugin(s) installed — remove if unused
-- 🔵 **WP Security** — site-three.example.com: readme.html is present — discloses the WordPress version
-- 🔵 **WP Security** — site-four.example.com: DISALLOW_FILE_EDIT not set — dashboard code editor is active
-- 🔵 **WP Security** — site-four.example.com: 6 inactive plugin(s) installed — remove if unused
-- 🔵 **WP Security** — site-four.example.com: readme.html is present — discloses the WordPress version
-- 🔵 **Plugins** — 6 plugin update(s) available across sites
+- **Verdict:** [ALERT] · 1 alert(s), 6 warning(s), 13 notice(s)
+- [ALERT] **SSH** — root login via *password* from 203.0.113.66 (2x) — password root SSH is enabled; set PermitRootLogin prohibit-password + PasswordAuthentication no
+- [WARN] **OS Updates** — 7 pending security update(s)
+- [WARN] **WP Security** — site-one.example.com: wp-config.php mode 0o664 — tighten to 0640 or stricter
+- [WARN] **WP Security** — site-two.example.com: wp-config.php mode 0o664 — tighten to 0640 or stricter
+- [WARN] **WP Security** — site-three.example.com: wp-config.php mode 0o664 — tighten to 0640 or stricter
+- [WARN] **WP Security** — site-four.example.com: wp-config.php mode 0o644 — tighten to 0640 or stricter
+- [WARN] **SSH** — 3,139 failed/invalid SSH attempts (brute-force scanning) — no rate-limiting observed
+- [INFO] **WP Security** — site-one.example.com: DISALLOW_FILE_EDIT not set — dashboard code editor is active
+- [INFO] **WP Security** — site-one.example.com: 2 inactive plugin(s) installed — remove if unused
+- [INFO] **WP Security** — site-one.example.com: readme.html is present — discloses the WordPress version
+- [INFO] **WP Security** — site-two.example.com: DISALLOW_FILE_EDIT not set — dashboard code editor is active
+- [INFO] **WP Security** — site-two.example.com: 2 inactive plugin(s) installed — remove if unused
+- [INFO] **WP Security** — site-two.example.com: readme.html is present — discloses the WordPress version
+- [INFO] **WP Security** — site-three.example.com: DISALLOW_FILE_EDIT not set — dashboard code editor is active
+- [INFO] **WP Security** — site-three.example.com: 2 inactive plugin(s) installed — remove if unused
+- [INFO] **WP Security** — site-three.example.com: readme.html is present — discloses the WordPress version
+- [INFO] **WP Security** — site-four.example.com: DISALLOW_FILE_EDIT not set — dashboard code editor is active
+- [INFO] **WP Security** — site-four.example.com: 6 inactive plugin(s) installed — remove if unused
+- [INFO] **WP Security** — site-four.example.com: readme.html is present — discloses the WordPress version
+- [INFO] **Plugins** — 6 plugin update(s) available across sites
 
 ## Recommended Actions
-1. **[ALERT] SSH** — root login via *password* from 203.0.113.66 (2x) — password root SSH is enabled; set PermitRootLogin prohibit-password + PasswordAuthentication no
-1. **[warn] OS Updates** — 7 pending security update(s)
-1. **[warn] WP Security** — site-one.example.com: wp-config.php mode 0o664 — tighten to 0640 or stricter
-1. **[warn] WP Security** — site-two.example.com: wp-config.php mode 0o664 — tighten to 0640 or stricter
-1. **[warn] WP Security** — site-three.example.com: wp-config.php mode 0o664 — tighten to 0640 or stricter
-1. **[warn] WP Security** — site-four.example.com: wp-config.php mode 0o644 — tighten to 0640 or stricter
-1. **[warn] SSH** — 3,139 failed/invalid SSH attempts (brute-force scanning) — no rate-limiting observed
+1. [ALERT] **SSH** — root login via *password* from 203.0.113.66 (2x) — password root SSH is enabled; set PermitRootLogin prohibit-password + PasswordAuthentication no
+1. [WARN] **OS Updates** — 7 pending security update(s)
+1. [WARN] **WP Security** — site-one.example.com: wp-config.php mode 0o664 — tighten to 0640 or stricter
+1. [WARN] **WP Security** — site-two.example.com: wp-config.php mode 0o664 — tighten to 0640 or stricter
+1. [WARN] **WP Security** — site-three.example.com: wp-config.php mode 0o664 — tighten to 0640 or stricter
+1. [WARN] **WP Security** — site-four.example.com: wp-config.php mode 0o644 — tighten to 0640 or stricter
+1. [WARN] **SSH** — 3,139 failed/invalid SSH attempts (brute-force scanning) — no rate-limiting observed
 
 
 ## 1. Host Infrastructure
@@ -65,46 +65,46 @@ Root inode usage: 1%.
 ## 2. WordPress Core Integrity
 | Site | Version | Checksums |
 |---|---|---|
-| site-one.example.com | 7.0.2 | ✅ verified |
-| site-two.example.com | 7.0.2 | ✅ verified |
-| site-three.example.com | 7.0.2 | ✅ verified |
-| site-four.example.com | 7.0.2 | ✅ verified |
+| site-one.example.com | 7.0.2 | [OK] verified |
+| site-two.example.com | 7.0.2 | [OK] verified |
+| site-three.example.com | 7.0.2 | [OK] verified |
+| site-four.example.com | 7.0.2 | [OK] verified |
 
 ## 3. WordPress Security Audit
 | Site | Check | Status | Detail |
 |---|---|---|---|
-| site-one.example.com | wp-config-perms | 🟠 WARN | wp-config.php mode 0o664 — tighten to 0640 or stricter |
-| site-one.example.com | debug-display | ✅ OK | WP_DEBUG_DISPLAY is off |
-| site-one.example.com | file-edit | 🔵 INFO | DISALLOW_FILE_EDIT not set — dashboard code editor is active |
-| site-one.example.com | table-prefix | ✅ OK | non-default table prefix (wpa1_) |
-| site-one.example.com | admin-user | ✅ OK | 1 admin account(s), none named 'admin' |
-| site-one.example.com | https | ✅ OK | site URL uses HTTPS |
-| site-one.example.com | inactive-plugins | 🔵 INFO | 2 inactive plugin(s) installed — remove if unused |
-| site-one.example.com | readme-exposed | 🔵 INFO | readme.html is present — discloses the WordPress version |
-| site-two.example.com | wp-config-perms | 🟠 WARN | wp-config.php mode 0o664 — tighten to 0640 or stricter |
-| site-two.example.com | debug-display | ✅ OK | WP_DEBUG_DISPLAY is off |
-| site-two.example.com | file-edit | 🔵 INFO | DISALLOW_FILE_EDIT not set — dashboard code editor is active |
-| site-two.example.com | table-prefix | ✅ OK | non-default table prefix (wpb2_) |
-| site-two.example.com | admin-user | ✅ OK | 1 admin account(s), none named 'admin' |
-| site-two.example.com | https | ✅ OK | site URL uses HTTPS |
-| site-two.example.com | inactive-plugins | 🔵 INFO | 2 inactive plugin(s) installed — remove if unused |
-| site-two.example.com | readme-exposed | 🔵 INFO | readme.html is present — discloses the WordPress version |
-| site-three.example.com | wp-config-perms | 🟠 WARN | wp-config.php mode 0o664 — tighten to 0640 or stricter |
-| site-three.example.com | debug-display | ✅ OK | WP_DEBUG_DISPLAY is off |
-| site-three.example.com | file-edit | 🔵 INFO | DISALLOW_FILE_EDIT not set — dashboard code editor is active |
-| site-three.example.com | table-prefix | ✅ OK | non-default table prefix (wpc3_) |
-| site-three.example.com | admin-user | ✅ OK | 1 admin account(s), none named 'admin' |
-| site-three.example.com | https | ✅ OK | site URL uses HTTPS |
-| site-three.example.com | inactive-plugins | 🔵 INFO | 2 inactive plugin(s) installed — remove if unused |
-| site-three.example.com | readme-exposed | 🔵 INFO | readme.html is present — discloses the WordPress version |
-| site-four.example.com | wp-config-perms | 🟠 WARN | wp-config.php mode 0o644 — tighten to 0640 or stricter |
-| site-four.example.com | debug-display | ✅ OK | WP_DEBUG_DISPLAY is off |
-| site-four.example.com | file-edit | 🔵 INFO | DISALLOW_FILE_EDIT not set — dashboard code editor is active |
-| site-four.example.com | table-prefix | ✅ OK | non-default table prefix (wpd4_) |
-| site-four.example.com | admin-user | ✅ OK | 4 admin account(s), none named 'admin' |
-| site-four.example.com | https | ✅ OK | site URL uses HTTPS |
-| site-four.example.com | inactive-plugins | 🔵 INFO | 6 inactive plugin(s) installed — remove if unused |
-| site-four.example.com | readme-exposed | 🔵 INFO | readme.html is present — discloses the WordPress version |
+| site-one.example.com | wp-config-perms | [WARN] | wp-config.php mode 0o664 — tighten to 0640 or stricter |
+| site-one.example.com | debug-display | [OK] | WP_DEBUG_DISPLAY is off |
+| site-one.example.com | file-edit | [INFO] | DISALLOW_FILE_EDIT not set — dashboard code editor is active |
+| site-one.example.com | table-prefix | [OK] | non-default table prefix (wpa1_) |
+| site-one.example.com | admin-user | [OK] | 1 admin account(s), none named 'admin' |
+| site-one.example.com | https | [OK] | site URL uses HTTPS |
+| site-one.example.com | inactive-plugins | [INFO] | 2 inactive plugin(s) installed — remove if unused |
+| site-one.example.com | readme-exposed | [INFO] | readme.html is present — discloses the WordPress version |
+| site-two.example.com | wp-config-perms | [WARN] | wp-config.php mode 0o664 — tighten to 0640 or stricter |
+| site-two.example.com | debug-display | [OK] | WP_DEBUG_DISPLAY is off |
+| site-two.example.com | file-edit | [INFO] | DISALLOW_FILE_EDIT not set — dashboard code editor is active |
+| site-two.example.com | table-prefix | [OK] | non-default table prefix (wpb2_) |
+| site-two.example.com | admin-user | [OK] | 1 admin account(s), none named 'admin' |
+| site-two.example.com | https | [OK] | site URL uses HTTPS |
+| site-two.example.com | inactive-plugins | [INFO] | 2 inactive plugin(s) installed — remove if unused |
+| site-two.example.com | readme-exposed | [INFO] | readme.html is present — discloses the WordPress version |
+| site-three.example.com | wp-config-perms | [WARN] | wp-config.php mode 0o664 — tighten to 0640 or stricter |
+| site-three.example.com | debug-display | [OK] | WP_DEBUG_DISPLAY is off |
+| site-three.example.com | file-edit | [INFO] | DISALLOW_FILE_EDIT not set — dashboard code editor is active |
+| site-three.example.com | table-prefix | [OK] | non-default table prefix (wpc3_) |
+| site-three.example.com | admin-user | [OK] | 1 admin account(s), none named 'admin' |
+| site-three.example.com | https | [OK] | site URL uses HTTPS |
+| site-three.example.com | inactive-plugins | [INFO] | 2 inactive plugin(s) installed — remove if unused |
+| site-three.example.com | readme-exposed | [INFO] | readme.html is present — discloses the WordPress version |
+| site-four.example.com | wp-config-perms | [WARN] | wp-config.php mode 0o644 — tighten to 0640 or stricter |
+| site-four.example.com | debug-display | [OK] | WP_DEBUG_DISPLAY is off |
+| site-four.example.com | file-edit | [INFO] | DISALLOW_FILE_EDIT not set — dashboard code editor is active |
+| site-four.example.com | table-prefix | [OK] | non-default table prefix (wpd4_) |
+| site-four.example.com | admin-user | [OK] | 4 admin account(s), none named 'admin' |
+| site-four.example.com | https | [OK] | site URL uses HTTPS |
+| site-four.example.com | inactive-plugins | [INFO] | 6 inactive plugin(s) installed — remove if unused |
+| site-four.example.com | readme-exposed | [INFO] | readme.html is present — discloses the WordPress version |
 
 ## 4. Plugins, Themes & Vulnerabilities
 
@@ -119,7 +119,7 @@ Root inode usage: 1%.
 | site-three.example.com | plugin | mailpoet | 5.34.1 | 5.34.2 |
 
 **Vulnerability scan** — 40 components vs wpvulnerability.net, CVEs cross-referenced with CISA KEV (1653 entries):
-- ✅ **0 matching vulnerabilities**, **0 CISA KEV** matches — all installed versions are newer than every known-vulnerable version.
+- [OK] **0 matching vulnerabilities**, **0 CISA KEV** matches — all installed versions are newer than every known-vulnerable version.
 - No public listing (custom/premium — verify manually): `site-connector-mu`, `site-tools`, `blocks-builder`, `hello`, `mail-composer-pro`, `custom-toolkit`, `custom-toolkit-pro`, `slim-seo-pro`, `code-snippets-pro`, `sso-auto-login`, `storefront-theme`, `storefront-theme-child`
 - Lookup did not complete for (re-run to confirm): `mail-composer`
 

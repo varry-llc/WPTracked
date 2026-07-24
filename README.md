@@ -1,53 +1,77 @@
 <div align="center">
-  <img src="assets/wptracked-logo.svg" alt="WPTracked by Varry LLC" height="72">
+  <img src="assets/wptracked-logo-western.svg" alt="WPTracked by Varry LLC" height="84">
   <h1>WPTracked</h1>
-  <p><strong>by Varry LLC</strong> · automated, read-only server &amp; WordPress health &amp; security auditing with branded e-mail reporting</p>
-  <p><a href="https://wptracked.com">wptracked.com</a> · <a href="https://github.com/varry-llc/WPTracked">github.com/varry-llc/WPTracked</a></p>
+  <p><strong><em>Know your WordPress fleet is healthy.</em></strong></p>
+  <p>
+    The quiet marshal keeping the WordPress frontier safe — an automated,
+    <strong>strictly read-only</strong> server &amp; WordPress health auditor that
+    rides out on <em>your</em> own infrastructure via a Devin outpost and wires
+    home a branded report.
+  </p>
+  <p>
+    <img alt="mode: read-only" src="https://img.shields.io/badge/mode-read--only-2b7a3b">
+    <img alt="verdict: HEALTHY or ALERT" src="https://img.shields.io/badge/verdict-%5BHEALTHY%5D%20%7C%20%5BALERT%5D-963a2f">
+    <img alt="mail: provider-agnostic" src="https://img.shields.io/badge/mail-EmailIt%20%C2%B7%20SMTP%20%C2%B7%20SendGrid%20%C2%B7%20Mailgun%20%C2%B7%20Resend-c46b3b">
+    <img alt="runs on: Devin Outpost" src="https://img.shields.io/badge/runs%20on-Devin%20Outpost-1c1511">
+    <img alt="by Varry LLC" src="https://img.shields.io/badge/%C2%A9-Varry%20LLC-5e4735">
+  </p>
+  <p>
+    <b><a href="https://wptracked.com">Visit wptracked.com</a></b> ·
+    <b><a href="https://github.com/varry-llc/WPTracked">View on GitHub</a></b> ·
+    <b><a href="reports/sample-wptracked-report.md">See a sample report</a></b>
+  </p>
 </div>
 
 ---
 
-**WPTracked** runs a routine, **strictly read-only** health & security audit of a
-VPS and every WordPress site it hosts, decides whether the result is
-`[HEALTHY]` or `[ALERT]`, and e-mails a branded report (HTML body + PDF
-attachment) through the mail provider of your choice.
+> Websites rarely fail loudly. They degrade **quietly** until the damage is already
+> done — an unpatched plugin becomes a backdoor, a config left world-readable
+> becomes an open vault, a cert lapses, the disk fills with intrusion noise.
+> WPTracked is the scout that reads the signs before the raid.
 
-It is designed to run **on the server** — either from a scheduled
+**WPTracked** rides a routine, **strictly read-only** health & security sweep of a
+VPS and every WordPress site it hosts, calls the verdict `[HEALTHY]` or
+`[ALERT]`, and wires home a branded report (HTML body + PDF attachment) through
+the mail carrier of your choice. It runs **on the server** — from a scheduled
 **[Devin outpost](docs/OUTPOST.md)** session or a native `cron`/systemd timer.
 
-> **Security-first.** WPTracked never updates, edits, or reconfigures anything.
-> It inspects and reports only. Automated remediation (updates with reports) is
-> a documented [future roadmap](#roadmap) item, disabled today.
+> ### 🤠 Strictly read-only
+> WPTracked is an **observer**. It never modifies files, never updates databases,
+> and never alters configs — fail-closed, no secrets logged, locked & idempotent
+> runs. Automated remediation (approved updates *with* reports) is a documented
+> [future capability](#wanted--the-roadmap), holstered for now.
 
-## Two scopes
+## Two scopes — pick your territory
 
-WPTracked runs in either scope, selected with `WPT_MODE`:
+Selected with `WPT_MODE`:
 
 | `WPT_MODE` | What runs |
 |---|---|
 | `server` | Host infrastructure + logs only — **no WordPress** (great for any VPS) |
 | `server+wp` *(default)* | Everything below |
 
-## What it checks
+## The marshal's rounds — what it checks
+
+A comprehensive sweep from the bedrock OS to the weather-vane on the saloon roof:
 
 | Area | Checks | Scope |
 |---|---|---|
-| **Host infrastructure** | Disk usage (`df`) + inode pressure, TLS certificate expiry per domain, pending OS/security updates (apt), reboot-required flag | both |
-| **Logs & intrusion** | Web-server (OpenLiteSpeed/Nginx/Apache) error logs, access-log status/threat summary (5xx, `wp-login`, `xmlrpc`, user-enum, `.env`/`.git` probes), SSH `auth.log` brute-force + successful-login analysis | both |
-| **WordPress core** | `wp core verify-checksums` on every install (tamper detection) + core version | wp |
-| **Plugins & themes** | Per-site inventory + available updates | wp |
-| **Vulnerabilities** | Known-vulnerability scan vs [wpvulnerability.net](https://www.wpvulnerability.net) (CVE + Patchstack), each CVE cross-referenced against the **CISA KEV** catalog | wp |
-| **WP security audit** | `wp-config.php` permissions, `WP_DEBUG_DISPLAY`, `DISALLOW_FILE_EDIT`, default table prefix, predictable `admin` account, HTTPS site URL, dormant inactive plugins, `readme.html` version disclosure | wp |
+| **1 · Host & infrastructure** | Disk usage (`df`) + inode pressure, TLS certificate expiry per domain, pending OS/security updates (apt), reboot-required flag | both |
+| **2 · Logs & perimeter defense** | Web-server (OpenLiteSpeed/Nginx/Apache) error logs, access-log status/threat summary (5xx, `wp-login`, `xmlrpc`, user-enum, `.env`/`.git` probes), SSH `auth.log` brute-force + successful-login analysis | both |
+| **3 · WordPress core & config** | `wp core verify-checksums` on every install (tamper detection) + core version | wp |
+| **4 · Plugins & themes** | Per-site inventory + available updates | wp |
+| **5 · Vulnerability scouting** | Known-vulnerability scan vs [wpvulnerability.net](https://www.wpvulnerability.net) (CVE + Patchstack), each CVE cross-referenced against the **CISA KEV** catalog, abandoned/withdrawn plugin flags | wp |
+| **6 · Security best-practices audit** | `wp-config.php` permissions, `WP_DEBUG_DISPLAY`, `DISALLOW_FILE_EDIT`, default table prefix, predictable `admin` account, HTTPS site URL, dormant inactive plugins, `readme.html` version disclosure | wp |
 
 Every check is **toggleable** (all on by default) — see [Configuration](#configuration).
 
-The overall verdict is `[ALERT]` if any critical condition is found (core
-tampering, a matching vulnerability/KEV, disk ≥ 90%, cert expiring soon, 5xx
-errors, world-writable `wp-config.php`, or password-based root SSH), otherwise
+The verdict is `[ALERT]` if any critical condition is found (core tampering, a
+matching vulnerability/KEV, disk ≥ 90%, cert expiring soon, 5xx errors,
+world-writable `wp-config.php`, or password-based root SSH), otherwise
 `[HEALTHY]`. A check that cannot be completed is reported as *skipped/incomplete*
 — **never** silently treated as clean.
 
-## How it works
+## The four-step posse — how it works
 
 ```
                                           ┌── reports/<name>.md    (plain / e-mail text)
@@ -59,19 +83,48 @@ collect.py ──▶ vuln_scan.py ──▶ render_report.py ──▶ reports/<
                                                                   (emailit│smtp│sendgrid│mailgun│resend)
 ```
 
-Each stage writes JSON the next stage consumes, so you can run/inspect any stage
-alone. `bin/healthcheck.sh` wires them together under a `flock` lock.
+Four riders, one job — **Collect → Scan → Render → Send**. Each stage writes JSON
+the next stage consumes, so you can run/inspect any rider alone.
+`bin/healthcheck.sh` wires them together under a `flock` lock.
 
-| Script | Role |
-|---|---|
-| [`scripts/collect.py`](scripts/collect.py) | Gather all raw data into `out/data.json` (read-only), honouring `WPT_MODE` + `CHECK_*` |
-| [`scripts/vuln_scan.py`](scripts/vuln_scan.py) | Match inventory vs wpvulnerability.net + CISA KEV → `out/vuln.json` |
-| [`scripts/render_report.py`](scripts/render_report.py) | Apply verdict rules; render Markdown + branded HTML + PDF |
-| [`scripts/send_report.py`](scripts/send_report.py) | Deliver via the configured provider-agnostic transport |
-| [`bin/healthcheck.sh`](bin/healthcheck.sh) | Orchestrator (`collect → scan → render → send`) with locking |
-| [`bin/install-cron.sh`](bin/install-cron.sh) | Install/remove the schedule (hourly/daily/weekly/monthly) |
+| Script | Rider | Role |
+|---|---|---|
+| [`scripts/collect.py`](scripts/collect.py) | **Collect** | Gather all raw data into `out/data.json` (read-only), honouring `WPT_MODE` + `CHECK_*` |
+| [`scripts/vuln_scan.py`](scripts/vuln_scan.py) | **Scan** | Match inventory vs wpvulnerability.net + CISA KEV → `out/vuln.json` |
+| [`scripts/render_report.py`](scripts/render_report.py) | **Render** | Apply verdict rules; render Markdown + branded HTML + PDF |
+| [`scripts/send_report.py`](scripts/send_report.py) | **Send** | Deliver via the configured provider-agnostic transport |
+| [`bin/healthcheck.sh`](bin/healthcheck.sh) | *Marshal* | Orchestrator (`collect → scan → render → send`) with locking |
+| [`bin/install-cron.sh`](bin/install-cron.sh) | *Timekeeper* | Install/remove the schedule (hourly/daily/weekly/monthly) |
 
 ## Quickstart
+
+### Step 0 — get onto the server via a Devin outpost
+
+WPTracked runs **on the target server**. The native way to get there is a Devin
+outpost (Devin's agent loop stays in the cloud; commands run on your box). On the
+**server**:
+
+```bash
+# 0a. Install the Devin CLI
+curl -fsSL https://cli.devin.ai/install.sh | bash
+
+# 0b. Create an outpost in Devin Cloud:
+#     Settings → Environment → Outposts → "Create Outpost"  (name it, platform = Linux)
+
+# 0c. Start a worker that serves that outpost (outbound-only HTTPS; runs as your user)
+devin worker start --outpost=<outpost_name>
+```
+
+Then start a Devin session **on that outpost** — it now appears as a machine
+option in Devin Cloud, and the worker on your server runs the session locally.
+Full details (prerequisites, API-token scopes, keeping the worker alive, the
+privileged `auth.log` pattern) are in **[docs/OUTPOST.md](docs/OUTPOST.md)**;
+upstream: https://docs.devin.ai/cloud/outposts/quickstart
+
+*(Prefer to run it yourself over plain SSH? Skip Step 0 — everything below works
+on any shell on the server.)*
+
+### Step 1 — install & run
 
 ```bash
 git clone https://github.com/varry-llc/WPTracked.git
@@ -147,15 +200,25 @@ idempotency key so a retried run does not duplicate the e-mail.
 | `BRAND_COMPANY` / `BRAND_PROJECT` / `BRAND_LOGO` | Branding (re-brand per client without code changes) |
 | `WPT_REPO_URL` / `WPT_SITE_URL` | Links shown in the report footer |
 
-## Example output
+## The bounty — a report worth riding for
 
-A representative `[ALERT]` run (all identifiers below are fabricated
-documentation values — `wp-prod-01`, `*.example.com`, and
-[RFC 5737](https://datatracker.ietf.org/doc/html/rfc5737)/`203.0.113.x` IPs):
+Raw data is forged into a branded report — a rich HTML e-mail body plus a
+portable PDF, grouped logically (verdict → recommended actions → host → core →
+WP security → vulnerabilities → logs → SSH) and dispatched via your mail carrier
+of choice.
+
+This is a **real `[ALERT]` run** (4 sites) with every identifying value replaced
+by documentation placeholders — hostname `wp-prod-01`, `*.example.com`, and
+[RFC 5737](https://datatracker.ietf.org/doc/html/rfc5737) IPs
+(`198.51.100.x`, `203.0.113.x`, `192.0.2.x`). The findings, versions, counts and
+verdict are otherwise as produced by the tool:
 
 <div align="center">
-  <img src="assets/sample-report-p1.png" alt="WPTracked report — verdict, summary, recommended actions, host infrastructure" width="49%">
-  <img src="assets/sample-report-p2.png" alt="WPTracked report — core integrity, WordPress security audit, vulnerabilities" width="49%">
+  <img src="assets/sample-report-p1.png" alt="WPTracked report page 1 — ALERT verdict, prioritised summary, recommended actions" width="85%">
+  <br><br>
+  <img src="assets/sample-report-p2.png" alt="WPTracked report page 2 — host infrastructure: disk, TLS certificates, OS updates" width="85%">
+  <br><br>
+  <img src="assets/sample-report-p3.png" alt="WPTracked report page 3 — WordPress core integrity and per-site security audit" width="85%">
 </div>
 
 The full sample is committed as
@@ -186,13 +249,17 @@ python3 -m unittest discover -s tests      # hermetic: no network, no server, no
 - Dynamic values are passed as argument arrays (no shell interpolation); commands
   and network calls are time-bounded; a `flock` prevents overlapping runs.
 
-## Roadmap
+## Wanted — the roadmap
 
-A **future** version will optionally perform approved, safe remediation —
-plugin/theme/core updates with pre-update backups, staged rollout, post-update
-health verification, rollback, and an e-mailed update summary. It is **not**
-implemented today; WPTracked remains strictly read-only.
+Today WPTracked is purely a **scout**. Next up (not yet available — coming soon
+to the frontier): an **opt-in approved automated-updates mode** that applies
+known-safe security patches — with pre-update backups, staged rollout,
+post-update health verification, rollback, and an e-mailed update summary. It is
+**not** implemented today; WPTracked remains strictly read-only.
 
 ---
 
-<div align="center"><sub>© Varry LLC · <a href="https://wptracked.com">WPTracked</a></sub></div>
+<div align="center">
+  <sub><strong>WPTracked</strong> — strictly read-only server &amp; WordPress health auditing<br>
+  A product of <a href="https://wptracked.com">Varry LLC</a> · © 2026 Varry LLC. All rights reserved.</sub>
+</div>

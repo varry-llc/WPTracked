@@ -1,18 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="380" height="72" viewBox="0 0 380 72" role="img" aria-label="WPTracked by Varry LLC">
   <defs>
     <linearGradient id="wpt" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#f4ebd9"/>
-      <stop offset="1" stop-color="#d6ad76"/>
+      <stop offset="0" stop-color="#2DD4BF"/>
+      <stop offset="1" stop-color="#1E6FB8"/>
     </linearGradient>
   </defs>
-  <!-- Mark: rounded "tin star" plaque holding a tracking pulse line + reticle dot -->
-  <rect x="2" y="6" width="60" height="60" rx="14" fill="#7a2d23" stroke="#c46b3b" stroke-width="1.5"/>
+  <!-- Mark: rounded square holding a tracking pulse line + reticle dot -->
+  <rect x="2" y="6" width="60" height="60" rx="14" fill="#12224A"/>
   <polyline points="12,44 22,44 28,26 36,52 42,36 52,36" fill="none"
             stroke="url(#wpt)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="52" cy="36" r="4.5" fill="#f4ebd9"/>
+  <circle cx="52" cy="36" r="4.5" fill="#2DD4BF"/>
   <!-- Wordmark -->
   <text x="76" y="38" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="30"
-        font-weight="700" fill="#7a2d23">WP<tspan fill="#963a2f">Tracked</tspan></text>
+        font-weight="700" fill="#12224A">WP<tspan fill="#1E6FB8">Tracked</tspan></text>
   <text x="77" y="58" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="12"
-        letter-spacing="2.5" fill="#5e4735">BY VARRY LLC</text>
+        letter-spacing="2.5" fill="#5A6B85">BY VARRY LLC</text>
 </svg>

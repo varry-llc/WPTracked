@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/wptracked-logo.svg" alt="WPTracked by Varry LLC" height="84">
+  <img src="assets/wptracked-logo-western.svg" alt="WPTracked by Varry LLC" height="84">
   <h1>WPTracked</h1>
   <p><strong><em>Know your WordPress fleet is healthy.</em></strong></p>
   <p>

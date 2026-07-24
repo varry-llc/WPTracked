@@ -45,11 +45,15 @@ WPTracked marketing site. It is self-contained.
 > - **Accessibility (WCAG 2.1 AA)**: keyboard navigable, visible focus states,
 >   ARIA only where needed, AA color contrast, respects
 >   `prefers-reduced-motion` and `prefers-color-scheme`.
+> - **Single self-contained file**: put all CSS in one inline `<style>` and all
+>   JS in one inline `<script type="module">`. No external CSS/JS files — the
+>   output must be copy-paste-and-open.
 > - **Vanilla CSS only** (no framework), **BEM** naming
 >   (`block__element--modifier`), CSS custom properties for the palette,
->   encapsulated per-component styles, mobile-first **responsive** layout.
-> - **Vanilla JavaScript only**, authored as **encapsulated ES modules**
->   (no globals; each behavior in its own module with a clean init API).
+>   per-component style sections, mobile-first **responsive** layout.
+> - **Vanilla JavaScript only**, written as **encapsulated modules within the
+>   single inline module** (no globals; each behavior is its own
+>   IIFE/closure/exported function with a clean init API).
 > - **Animation**: use **CSS animations/transitions** for simple effects
 >   (hover, reveal-on-scroll via `IntersectionObserver`); use **GSAP**
 >   (with `ScrollTrigger`) for the complex sequenced/scroll-driven animations
@@ -79,7 +83,7 @@ WPTracked marketing site. It is self-contained.
 > (`/* replace with a properly licensed audio asset */`) rather than shipping any
 > unlicensed track. Never autoplay audio.
 >
-> **Deliverables:** `index.html`, `styles/` (BEM CSS), `scripts/` (ES modules),
-> and any original SVG/illustration assets, with brief comments explaining
-> structure. Keep the GitHub link (https://github.com/varry-llc/WPTracked)
-> visible in the hero and footer.
+> **Deliverable:** exactly **one `index.html`** file (inline CSS + inline
+> module JS + inline SVG, GSAP via CDN), with brief comments explaining
+> structure, ready to copy-paste and open in a browser. Keep the GitHub link
+> (https://github.com/varry-llc/WPTracked) visible in the hero and footer.

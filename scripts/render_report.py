@@ -179,21 +179,54 @@ def render_markdown(data: dict, vuln: dict, verdict: dict) -> str:
     counts = {s: sum(1 for i in items if i["severity"] == s) for s in (ALERT, WARN, INFO)}
     L.append(f"- **Verdict:** {'[ALERT]' if verdict['status']=='ALERT' else '[HEALTHY]'} "
              f"· {counts[ALERT]} alert(s), {counts[WARN]} warning(s), {counts[INFO]} notice(s)")
-    sig = [i for i in items if i["severity"] in order]
-    if sig:
-        for i in sorted(sig, key=lambda x: order[x["severity"]]):
-            L.append(f"- {labels[i['severity']]} **{i['area']}** — {i['message']}")
+
+    # Collapse identical findings that recur across sites into a single line
+    # ("on N sites"); per-site fleet audits otherwise produce a long, repetitive
+    # Summary. Full per-site detail still lives in the tables below.
+    def _detail(it: dict) -> str:
+        if it["area"] in ("WP Security", "WP Core") and ": " in it["message"]:
+            return it["message"].split(": ", 1)[1]
+        return it["message"]
+
+    grouped, seen = [], {}
+    for it in sorted(items, key=lambda x: order.get(x["severity"], 9)):
+        if it["severity"] not in order:
+            continue
+        key = (it["severity"], it["area"], _detail(it))
+        if key in seen:
+            seen[key]["n"] += 1
+            continue
+        g = {"sev": it["severity"], "area": it["area"], "detail": _detail(it), "n": 1}
+        seen[key] = g
+        grouped.append(g)
+
+    # Prioritised (alerts + warnings) are listed individually; low-priority
+    # informational notices are rolled up so the Summary stays scannable.
+    shown = [g for g in grouped if g["sev"] in (ALERT, WARN)]
+    plugin_info = [g for g in grouped if g["sev"] == INFO and g["area"] == "Plugins"]
+    other_info = [g for g in grouped if g["sev"] == INFO and g["area"] != "Plugins"]
+
+    def _sites(n: int) -> str:
+        return f" (on {n} sites)" if n > 1 else ""
+
+    if shown or plugin_info or other_info:
+        for g in shown + plugin_info:
+            L.append(f"- {labels[g['sev']]} **{g['area']}** — {g['detail']}{_sites(g['n'])}")
+        if other_info:
+            n_notices = sum(g["n"] for g in other_info)
+            areas = ", ".join(sorted({g["area"] for g in other_info}))
+            L.append(f"- [INFO] **Notices** — {n_notices} informational best-practice "
+                     f"finding(s) ({areas}); see the sections below for details.")
     else:
         L.append("- [OK] All checks passed — no action required.")
     L.append("")
 
     # --- Recommendations (actionable, alerts + warnings) ----------------------
-    todo = [i for i in items if i["severity"] in (ALERT, WARN)]
-    if todo:
+    if shown:
         L.append("## Recommended Actions")
-        for i in sorted(todo, key=lambda x: order[x["severity"]]):
-            tag = "ALERT" if i["severity"] == ALERT else "WARN"
-            L.append(f"1. [{tag}] **{i['area']}** — {i['message']}")
+        for g in shown:
+            tag = "ALERT" if g["sev"] == ALERT else "WARN"
+            L.append(f"1. [{tag}] **{g['area']}** — {g['detail']}{_sites(g['n'])}")
         L.append("")
 
     section = 0

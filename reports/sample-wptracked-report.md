@@ -9,32 +9,17 @@
 - **Verdict:** [ALERT] · 1 alert(s), 6 warning(s), 13 notice(s)
 - [ALERT] **SSH** — root login via *password* from 203.0.113.66 (2x) — password root SSH is enabled; set PermitRootLogin prohibit-password + PasswordAuthentication no
 - [WARN] **OS Updates** — 7 pending security update(s)
-- [WARN] **WP Security** — site-one.example.com: wp-config.php mode 0o664 — tighten to 0640 or stricter
-- [WARN] **WP Security** — site-two.example.com: wp-config.php mode 0o664 — tighten to 0640 or stricter
-- [WARN] **WP Security** — site-three.example.com: wp-config.php mode 0o664 — tighten to 0640 or stricter
-- [WARN] **WP Security** — site-four.example.com: wp-config.php mode 0o644 — tighten to 0640 or stricter
+- [WARN] **WP Security** — wp-config.php mode 0o664 — tighten to 0640 or stricter (on 3 sites)
+- [WARN] **WP Security** — wp-config.php mode 0o644 — tighten to 0640 or stricter
 - [WARN] **SSH** — 3,139 failed/invalid SSH attempts (brute-force scanning) — no rate-limiting observed
-- [INFO] **WP Security** — site-one.example.com: DISALLOW_FILE_EDIT not set — dashboard code editor is active
-- [INFO] **WP Security** — site-one.example.com: 2 inactive plugin(s) installed — remove if unused
-- [INFO] **WP Security** — site-one.example.com: readme.html is present — discloses the WordPress version
-- [INFO] **WP Security** — site-two.example.com: DISALLOW_FILE_EDIT not set — dashboard code editor is active
-- [INFO] **WP Security** — site-two.example.com: 2 inactive plugin(s) installed — remove if unused
-- [INFO] **WP Security** — site-two.example.com: readme.html is present — discloses the WordPress version
-- [INFO] **WP Security** — site-three.example.com: DISALLOW_FILE_EDIT not set — dashboard code editor is active
-- [INFO] **WP Security** — site-three.example.com: 2 inactive plugin(s) installed — remove if unused
-- [INFO] **WP Security** — site-three.example.com: readme.html is present — discloses the WordPress version
-- [INFO] **WP Security** — site-four.example.com: DISALLOW_FILE_EDIT not set — dashboard code editor is active
-- [INFO] **WP Security** — site-four.example.com: 6 inactive plugin(s) installed — remove if unused
-- [INFO] **WP Security** — site-four.example.com: readme.html is present — discloses the WordPress version
 - [INFO] **Plugins** — 6 plugin update(s) available across sites
+- [INFO] **Notices** — 12 informational best-practice finding(s) (WP Security); see the sections below for details.
 
 ## Recommended Actions
 1. [ALERT] **SSH** — root login via *password* from 203.0.113.66 (2x) — password root SSH is enabled; set PermitRootLogin prohibit-password + PasswordAuthentication no
 1. [WARN] **OS Updates** — 7 pending security update(s)
-1. [WARN] **WP Security** — site-one.example.com: wp-config.php mode 0o664 — tighten to 0640 or stricter
-1. [WARN] **WP Security** — site-two.example.com: wp-config.php mode 0o664 — tighten to 0640 or stricter
-1. [WARN] **WP Security** — site-three.example.com: wp-config.php mode 0o664 — tighten to 0640 or stricter
-1. [WARN] **WP Security** — site-four.example.com: wp-config.php mode 0o644 — tighten to 0640 or stricter
+1. [WARN] **WP Security** — wp-config.php mode 0o664 — tighten to 0640 or stricter (on 3 sites)
+1. [WARN] **WP Security** — wp-config.php mode 0o644 — tighten to 0640 or stricter
 1. [WARN] **SSH** — 3,139 failed/invalid SSH attempts (brute-force scanning) — no rate-limiting observed
 
 

@@ -143,5 +143,38 @@ class Transports(unittest.TestCase):
                 self.assertNotIn("secret-key-value", info)  # never leak the key
 
 
+class SiteDiscovery(unittest.TestCase):
+    """discover_sites must find every install, including nested docroots."""
+
+    def _mk(self, base: Path, rel: str) -> None:
+        d = base / rel
+        d.mkdir(parents=True, exist_ok=True)
+        (d / "wp-load.php").write_text("")
+
+    def test_finds_top_level_and_nested_docroots(self):
+        with tempfile.TemporaryDirectory() as t:
+            root = Path(t) / "www"
+            self._mk(root, "plain.com")               # docroot == site dir
+            self._mk(root, "example.com/htdocs")       # nested docroot
+            self._mk(root, "shop.com/public_html")     # nested docroot
+            self._mk(root, "plain.com/wp-content/foo")  # must NOT be a 2nd site
+            sites = {s["slug"]: s["path"] for s in collect.discover_sites(str(root))}
+            self.assertEqual(set(sites), {"plain.com", "example.com", "shop.com"})
+            self.assertTrue(sites["example.com"].endswith("/htdocs"))
+
+    def test_web_roots_merges_env_and_dedupes(self):
+        old = {k: os.environ.get(k) for k in ("WWW_ROOT", "WWW_ROOTS")}
+        try:
+            os.environ["WWW_ROOTS"] = "/var/www, /srv/www"
+            os.environ["WWW_ROOT"] = "/var/www"  # duplicate -> collapsed
+            roots = collect.web_roots(None)
+            self.assertEqual(roots, ["/var/www", "/srv/www"])
+        finally:
+            for k, v in old.items():
+                os.environ.pop(k, None)
+                if v is not None:
+                    os.environ[k] = v
+
+
 if __name__ == "__main__":
     unittest.main()

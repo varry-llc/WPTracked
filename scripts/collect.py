@@ -30,6 +30,7 @@ Notes
 from __future__ import annotations
 import argparse
 import datetime as dt
+import glob
 import json
 import os
 import re
@@ -214,16 +215,76 @@ def collect_updates() -> dict:
 # WordPress
 # --------------------------------------------------------------------------- #
 
-def discover_sites(www_root: str) -> list[dict]:
-    """Find WordPress installs under www_root (dirs containing wp-load.php)."""
-    sites = []
+# Directories that never contain a *separate* WordPress install and only slow
+# discovery down (a WP install's own subtrees, package/vcs noise).
+_DISCOVERY_SKIP = {"wp-content", "wp-includes", "wp-admin",
+                   "node_modules", "vendor", ".git", ".svn", "cache"}
+
+
+def web_roots(cli_root: str | None = None) -> list[str]:
+    """Ordered, de-duplicated list of web roots to scan.
+
+    Sources, in priority order: an explicit CLI/`--www-root` value, the
+    comma-separated `WWW_ROOTS` env var (for hosts that spread sites across
+    several roots), the single `WWW_ROOT` env var, and finally the `/var/www`
+    default. This is why the tool "scans all sites" even across multiple roots.
+    """
+    raw: list[str] = []
+    if cli_root:
+        raw.append(cli_root)
+    multi = os.environ.get("WWW_ROOTS", "").strip()
+    if multi:
+        raw += [r.strip() for r in multi.split(",") if r.strip()]
+    single = os.environ.get("WWW_ROOT", "").strip()
+    if single:
+        raw.append(single)
+    if not raw:
+        raw.append("/var/www")
+    # Expand shell globs (e.g. "/home/*/htdocs") to concrete directories.
+    candidates: list[str] = []
+    for c in raw:
+        if any(ch in c for ch in "*?["):
+            candidates += sorted(p for p in glob.glob(c) if os.path.isdir(p))
+        else:
+            candidates.append(c)
+    seen: set[str] = set()
+    roots: list[str] = []
+    for c in candidates:
+        rp = os.path.realpath(c)
+        if rp not in seen:
+            seen.add(rp)
+            roots.append(c)
+    return roots
+
+
+def discover_sites(www_root: str, max_depth: int = 4) -> list[dict]:
+    """Find every WordPress install under ``www_root``.
+
+    A site is any directory containing ``wp-load.php``. Unlike a single-level
+    scan, this walks up to ``max_depth`` levels so nested docroots
+    (``…/htdocs``, ``…/public_html``, ``…/public``, ``…/current``) are found —
+    the common cause of a live site being missing from the report. The site
+    ``slug`` is the top-level folder under the web root (usually the domain),
+    while ``path`` is the actual install directory.
+    """
+    sites: list[dict] = []
     root = Path(www_root)
     if not root.is_dir():
         return sites
-    for child in sorted(root.iterdir()):
-        if child.is_dir() and (child / "wp-load.php").exists():
-            sites.append({"slug": child.name, "path": str(child),
-                          "url": f"https://{child.name}"})
+    root_depth = len(root.parts)
+    for dirpath, dirnames, filenames in os.walk(www_root):
+        depth = len(Path(dirpath).parts) - root_depth
+        if depth >= max_depth:
+            dirnames[:] = []
+        dirnames[:] = sorted(d for d in dirnames if d not in _DISCOVERY_SKIP)
+        if "wp-load.php" in filenames:
+            p = Path(dirpath)
+            rel = p.relative_to(root)
+            slug = rel.parts[0] if rel.parts else p.name
+            sites.append({"slug": slug, "path": str(p),
+                          "url": f"https://{slug}"})
+            # A WordPress install never nests another; stop descending here.
+            dirnames[:] = []
     return sites
 
 
@@ -459,9 +520,12 @@ def collect_auth_log(path: str = "/var/log/auth.log") -> dict:
 def main() -> int:
     ap = argparse.ArgumentParser(description="Collect WP/server health data as JSON.")
     ap.add_argument("--out", default="out/data.json", help="output JSON path")
-    ap.add_argument("--www-root", default=os.environ.get("WWW_ROOT", "/var/www"))
+    ap.add_argument("--www-root", default=None,
+                    help="web root to scan (overrides WWW_ROOT/WWW_ROOTS env)")
     ap.add_argument("--server-label", default=os.environ.get("SERVER_LABEL", ""))
     args = ap.parse_args()
+
+    roots = web_roots(args.www_root)
 
     # WordPress inspection only in server+wp mode (and only if wp-cli exists).
     sites: list[dict] = []
@@ -470,9 +534,23 @@ def main() -> int:
             print("WARNING: wp-cli not found on PATH; WordPress checks skipped.",
                   file=sys.stderr)
         else:
-            sites = discover_sites(args.www_root)
+            # Scan every web root, de-duplicating installs by real path so a
+            # site reachable via multiple roots/symlinks is only audited once.
+            seen: set[str] = set()
+            for root in roots:
+                for s in discover_sites(root):
+                    rp = os.path.realpath(s["path"])
+                    if rp in seen:
+                        continue
+                    seen.add(rp)
+                    sites.append(s)
+            sites.sort(key=lambda s: s["slug"])
             for s in sites:
                 collect_site(s)
+            print(f"discover: {len(sites)} site(s) across {len(roots)} web root(s) "
+                  f"[{', '.join(r for r in roots)}]: "
+                  f"{', '.join(s['slug'] for s in sites) or 'none'}",
+                  file=sys.stderr)
 
     # Host infrastructure — each block honours its CHECK_* toggle.
     disk, inode_pct = collect_disk() if flag("CHECK_DISK") else ([], None)
@@ -497,7 +575,7 @@ def main() -> int:
             "server_label": args.server_label or socket.gethostname(),
             "hostname": socket.gethostname(),
             "run_as_root": os.geteuid() == 0,
-            "www_root": args.www_root,
+            "www_root": ", ".join(roots),
             "mode": mode(),
             "checks": {n: flag(n) for n in (
                 "CHECK_DISK", "CHECK_SSL", "CHECK_UPDATES", "CHECK_WEB_LOGS",

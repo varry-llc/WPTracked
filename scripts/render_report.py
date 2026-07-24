@@ -238,7 +238,8 @@ def render_markdown(data: dict, vuln: dict, verdict: dict) -> str:
     # --- WordPress Security Audit --------------------------------------------
     if sites and any(s.get("security") for s in sites):
         h2("WordPress Security Audit")
-        sev_icon = {"alert": "🔴", "warn": "🟠", "info": "🔵", "ok": "✅"}
+        sev_icon = {"alert": "🔴 ALERT", "warn": "🟠 WARN",
+                    "info": "🔵 INFO", "ok": "✅ OK"}
         L.append("| Site | Check | Status | Detail |")
         L.append("|---|---|---|---|")
         for s in sites:

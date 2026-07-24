@@ -149,8 +149,17 @@ idempotency key so a retried run does not duplicate the e-mail.
 
 ## Example output
 
-A representative run is committed as
-[`reports/sample-wptracked-report.md`](reports/sample-wptracked-report.md) with
+A representative `[ALERT]` run (all identifiers below are fabricated
+documentation values — `wp-prod-01`, `*.example.com`, and
+[RFC 5737](https://datatracker.ietf.org/doc/html/rfc5737)/`203.0.113.x` IPs):
+
+<div align="center">
+  <img src="assets/sample-report-p1.png" alt="WPTracked report — verdict, summary, recommended actions, host infrastructure" width="49%">
+  <img src="assets/sample-report-p2.png" alt="WPTracked report — core integrity, WordPress security audit, vulnerabilities" width="49%">
+</div>
+
+The full sample is committed as
+[`reports/sample-wptracked-report.md`](reports/sample-wptracked-report.md) and
 the branded PDF at
 [`reports/sample-wptracked-report.pdf`](reports/sample-wptracked-report.pdf).
 

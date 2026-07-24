@@ -1,23 +1,23 @@
 # [ALERT] Varry LLC · WPTracked — Health Check
 
-**Server:** `v2202512262656416143`  
+**Server:** `wp-prod-01`  
 **Generated:** 2026-07-24T07:15:00+00:00  
 **Scope:** Server + WordPress  
-**Sites:** test1-656j
+**Sites:** site-one
 
 ## Summary
 - **Verdict:** 🔴 ALERT · 1 alert(s), 2 warning(s), 4 notice(s)
-- 🔴 **SSH** — root login via *password* from 175.41.162.81 (2x) — password root SSH is enabled; set PermitRootLogin prohibit-password + PasswordAuthentication no
-- 🟠 **Logs** — test1-656j: 2 HTTP 5xx response(s) in access log
+- 🔴 **SSH** — root login via *password* from 203.0.113.66 (2x) — password root SSH is enabled; set PermitRootLogin prohibit-password + PasswordAuthentication no
+- 🟠 **Logs** — site-one: 2 HTTP 5xx response(s) in access log
 - 🟠 **SSH** — 3,102 failed/invalid SSH attempts (brute-force scanning) — no rate-limiting observed
-- 🔵 **WP Security** — test1-656j: DISALLOW_FILE_EDIT not set — dashboard code editor is active
-- 🔵 **WP Security** — test1-656j: default table prefix 'wp_' in use
-- 🔵 **WP Security** — test1-656j: 2 inactive plugin(s) installed — remove if unused
+- 🔵 **WP Security** — site-one: DISALLOW_FILE_EDIT not set — dashboard code editor is active
+- 🔵 **WP Security** — site-one: default table prefix 'wp_' in use
+- 🔵 **WP Security** — site-one: 2 inactive plugin(s) installed — remove if unused
 - 🔵 **Plugins** — 2 plugin update(s) available across sites
 
 ## Recommended Actions
-1. **[ALERT] SSH** — root login via *password* from 175.41.162.81 (2x) — password root SSH is enabled; set PermitRootLogin prohibit-password + PasswordAuthentication no
-1. **[warn] Logs** — test1-656j: 2 HTTP 5xx response(s) in access log
+1. **[ALERT] SSH** — root login via *password* from 203.0.113.66 (2x) — password root SSH is enabled; set PermitRootLogin prohibit-password + PasswordAuthentication no
+1. **[warn] Logs** — site-one: 2 HTTP 5xx response(s) in access log
 1. **[warn] SSH** — 3,102 failed/invalid SSH attempts (brute-force scanning) — no rate-limiting observed
 
 
@@ -33,7 +33,7 @@ Root inode usage: 1%.
 ### TLS Certificates
 | Domain | Issuer | Expires | Days left |
 |---|---|---|---|
-| test1-656j.1wp.site | Google Trust Services | 2026-10-05 | 73 |
+| site-one.example.com | Google Trust Services | 2026-10-05 | 73 |
 
 ### OS / Security Updates
 - Applicable now: **0** (security: 0)
@@ -43,42 +43,42 @@ Root inode usage: 1%.
 ## 2. WordPress Core Integrity
 | Site | Version | Checksums |
 |---|---|---|
-| test1-656j | 7.0.2 | ✅ verified |
+| site-one | 7.0.2 | ✅ verified |
 
 ## 3. WordPress Security Audit
 | Site | Check | Status | Detail |
 |---|---|---|---|
-| test1-656j | wp-config-perms | ✅ | wp-config.php mode 0o640 |
-| test1-656j | debug-display | ✅ | WP_DEBUG_DISPLAY is off |
-| test1-656j | file-edit | 🔵 | DISALLOW_FILE_EDIT not set — dashboard code editor is active |
-| test1-656j | table-prefix | 🔵 | default table prefix 'wp_' in use |
-| test1-656j | admin-user | ✅ | 1 admin account(s), none named 'admin' |
-| test1-656j | https | ✅ | site URL uses HTTPS |
-| test1-656j | inactive-plugins | 🔵 | 2 inactive plugin(s) installed — remove if unused |
+| site-one | wp-config-perms | ✅ OK | wp-config.php mode 0o640 |
+| site-one | debug-display | ✅ OK | WP_DEBUG_DISPLAY is off |
+| site-one | file-edit | 🔵 INFO | DISALLOW_FILE_EDIT not set — dashboard code editor is active |
+| site-one | table-prefix | 🔵 INFO | default table prefix 'wp_' in use |
+| site-one | admin-user | ✅ OK | 1 admin account(s), none named 'admin' |
+| site-one | https | ✅ OK | site URL uses HTTPS |
+| site-one | inactive-plugins | 🔵 INFO | 2 inactive plugin(s) installed — remove if unused |
 
 ## 4. Plugins, Themes & Vulnerabilities
 
 **Available updates:**
 | Site | Type | Name | Installed | Latest |
 |---|---|---|---|---|
-| test1-656j | plugin | fluentform | 6.2.7 | 6.2.8 |
-| test1-656j | plugin | mailpoet | 5.34.1 | 5.34.2 |
+| site-one | plugin | fluentform | 6.2.7 | 6.2.8 |
+| site-one | plugin | mailpoet | 5.34.1 | 5.34.2 |
 
 **Vulnerability scan** — 27 components vs wpvulnerability.net, CVEs cross-referenced with CISA KEV (1400 entries):
 - ✅ **0 matching vulnerabilities**, **0 CISA KEV** matches — all installed versions are newer than every known-vulnerable version.
-- No public listing (custom/premium — verify manually): `wpcodebox2`, `devkit`, `etch-theme`
+- No public listing (custom/premium — verify manually): `custom-toolkit`, `site-devkit`, `storefront-theme`
 
 ## 5. Logs & Intrusion Scanning
-- Web-server error log `test1-656j`: empty
-- Access `test1-656j`: 1842 reqs; 2xx=1710, 4xx=40, 5xx=2
+- Web-server error log `site-one`: empty
+- Access `site-one`: 1842 reqs; 2xx=1710, 4xx=40, 5xx=2
 
 ### SSH auth.log
 - Window: Jul 17 00:04 → Jul 24 07:10
 - Invalid-user attempts: **3,044**; failed passwords: **58** (root: 23) — none successful.
 - Accepted logins:
-  - publickey for `root` from 13.229.188.242 ×84  (allowlisted)
-  - password for `root` from 175.41.162.81 ×2
-  - publickey for `tlowing` from 13.250.4.14 ×12  (allowlisted)
+  - publickey for `root` from 198.51.100.10 ×84  (allowlisted)
+  - password for `root` from 203.0.113.66 ×2
+  - publickey for `deploy` from 198.51.100.11 ×12  (allowlisted)
 
 ---
 _Generated by Varry LLC · WPTracked (https://wptracked.com) — automated, read-only health check._

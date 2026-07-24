@@ -79,7 +79,10 @@ $EDITOR config/wptracked.env     # WPT_MODE, MAIL_TRANSPORT + creds, MAIL_TO, SS
 Key choices:
 
 - **`WPT_MODE`** — `server` for a plain VPS, or `server+wp` (default) to also
-  audit every WordPress site under `WWW_ROOT`.
+  audit every WordPress site under the web root(s). Sites are discovered
+  **recursively** under `WWW_ROOT` (so nested docroots like `<site>/htdocs` are
+  found); if your installs span several roots, set `WWW_ROOTS` to a
+  comma-separated list (globs like `/home/*/htdocs` are expanded).
 - **`MAIL_TRANSPORT`** — `emailit`, `smtp`, `sendgrid`, `mailgun`, `resend`, or
   `none`. See [the README](../README.md#mail-provider-agnostic).
 - **`SSH_ALLOWLIST`** — only the IPs whose **key-based** logins are expected
@@ -99,19 +102,44 @@ sudo -E bin/healthcheck.sh --dry-run
 
 ## 3. Privileged access pattern
 
-The scheduler runs as root directly. When running interactively as an
-unprivileged pseudo-user (e.g. `devinoutpost`) that has `sudo`, invoke the
-orchestrator so `auth.log` is readable and a user-installed WeasyPrint is
-importable:
+Only **one** thing needs elevated rights: reading `/var/log/auth.log` (owned
+`syslog:adm`, mode `640`) for the SSH-intrusion analysis. Everything else runs
+fine unprivileged. The app itself **never** calls `sudo`/`su` — it reads
+`auth.log` only if the OS already permits it, otherwise it marks that section
+*skipped* (never "clean"). So pick a run identity that can read it:
+
+**Recommended — grant the run-user read access once, then no `sudo` ever:**
 
 ```bash
-sudo env \
+sudo usermod -aG adm <user>      # <user> = the account the outpost worker runs as
+# open a new login session (or `newgrp adm`) so the group takes effect, then:
+bin/healthcheck.sh --send        # auth.log readable, no password prompt
+```
+
+**Recommended for the recurring run — root cron/systemd** (see
+[SCHEDULING.md](SCHEDULING.md) / `bin/install-cron.sh`). Cron launches the job
+**as root**, so there is no `sudo` and no password at runtime at all.
+
+> **Important — whose credential is whose.** The outpost worker executes every
+> command as **the OS user that started `devin worker start`**. `sudo`
+> authenticates *that* user with *that* user's password — a `SUDO_PASSWORD` for
+> a *different* account (e.g. you provided `devinoutpost`'s password but the
+> worker is running as `tlowing`) will be rejected. Check with `whoami` /
+> `id -nG`. The clean fixes above (`adm` group, or root cron) avoid interactive
+> `sudo` — and its "a terminal is required" pitfall — entirely.
+
+If you must use `sudo` interactively (worker user *is* the one whose password
+you have, and it's in `sudo`), preserve a user-installed WeasyPrint and any
+Devin-provided secret env vars:
+
+```bash
+sudo -E env \
   PYTHONPATH="$HOME/.local/lib/python3.<minor>/site-packages" \
   bin/healthcheck.sh --send
 ```
 
 If WeasyPrint is installed system-wide (`apt install python3-weasyprint`) drop
-the `PYTHONPATH` line. Pass `-E` to preserve any Devin-provided secret env vars.
+the `PYTHONPATH` line.
 
 ## 4. First run (recommended: no e-mail yet)
 
@@ -143,9 +171,30 @@ server, or drive recurring runs with a **Devin Automation**.
 
 | Symptom | Fix |
 |---|---|
-| `auth=skipped` in collect output | Not running as root / not in `adm` group. |
+| **A live site is missing from the report** | Confirm it's under a scanned web root: the `discover: N site(s) across … : …` line (stderr) lists what was found. If it lives under a different root, add it to `WWW_ROOTS`. Nested docroots (`<site>/htdocs`, `/public_html`) are found automatically. Verify the install with `ls <path>/wp-load.php`. |
+| **`sudo: incorrect password`** | The worker is running as a *different* user than the one whose `SUDO_PASSWORD` you provided. Run `whoami`; either supply that user's password, add it to `adm` (`sudo usermod -aG adm <user>`), or schedule via root cron. |
+| **`sudo: a terminal is required to read the password`** | You invoked `sudo` from a non-interactive `su -c '… sudo …'` (no TTY). Use `adm` group / root cron instead of interactive `sudo`, or run from a real login shell. |
+| `auth=skipped` in collect output | Not running as root / run-user not in `adm` group. Add it to `adm` or run the recurring job from root cron. |
 | PDF skipped (`WeasyPrint unavailable`) | Install WeasyPrint + its pango/cairo system libs. |
 | `MAIL_FROM is missing or not a valid address` | Set `MAIL_FROM` to `Name <addr@domain>` on a verified domain. |
 | EmailIt `422 unverified domain` | Use a `MAIL_FROM` on a domain verified with your provider. |
 | `Another WPTracked run holds …lock` | A previous run is still going; this run exits cleanly by design. |
 | wp-cli permission warnings (e.g. `.litespeed_conf.dat`) | Harmless; they go to stderr and don't affect results. |
+
+## Lessons learned
+
+- **Match the run-user to the credential.** The outpost runs commands as the OS
+  user that launched `devin worker start`. Decide that user up front and make
+  *it* able to read `auth.log` (via `adm`) — don't rely on a `sudo` password
+  that belongs to a different account. `whoami` / `id -nG` tell you where you
+  stand.
+- **A one-off report is one command, not a schedule change.** `bin/healthcheck.sh
+  --send` runs a single pass and exits. You never shorten a cron frequency to
+  "trigger" a run; frequency (cron/systemd/Automation) is entirely separate from
+  the outbound-only worker connection.
+- **Prefer root cron for recurring runs.** It sidesteps interactive `sudo`
+  entirely and guarantees `auth.log` access.
+- **Discovery must be layout-agnostic.** Real hosts nest docroots and spread
+  sites across roots; discovery walks recursively and honours `WWW_ROOTS` so no
+  site is silently missed. The stderr `discover:` line is your receipt of what
+  was scanned.

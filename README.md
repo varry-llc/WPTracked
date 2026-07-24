@@ -169,6 +169,8 @@ commented list. The essentials:
 | Variable | Purpose |
 |---|---|
 | `WPT_MODE` | `server` or `server+wp` (default) |
+| `WWW_ROOT` | Primary web root (default `/var/www`); sites are discovered **recursively** (nested docroots like `<site>/htdocs` included) |
+| `WWW_ROOTS` | Optional comma-separated list of **additional** roots when sites span several locations (globs like `/home/*/htdocs` expanded) |
 | `CHECK_DISK`, `CHECK_SSL`, `CHECK_UPDATES`, `CHECK_WEB_LOGS`, `CHECK_AUTH_LOG` | Host/log toggles (all `1`) |
 | `CHECK_WP_CORE`, `CHECK_WP_UPDATES`, `CHECK_WP_VULN`, `CHECK_WP_SECURITY` | WordPress toggles (all `1`) |
 
@@ -231,6 +233,7 @@ the branded PDF at
 - **[docs/OUTPOST.md](docs/OUTPOST.md)** — end-to-end setup on the server through a Devin outpost (native workflow, dependencies, permissions, first run).
 - **[docs/SCHEDULING.md](docs/SCHEDULING.md)** — recurring runs: `cron`, systemd timer, or a Devin Automation; frequency, locking, missed schedules.
 - **[docs/REPORT.md](docs/REPORT.md)** — report sections, verdict rules, the WordPress security audit, and coverage caveats.
+- **[docs/OUTPOST.md#troubleshooting](docs/OUTPOST.md#troubleshooting)** — troubleshooting + lessons learned (a site missing from the report, `sudo`/run-user mismatches, `auth.log` access).
 
 ## Testing
 
